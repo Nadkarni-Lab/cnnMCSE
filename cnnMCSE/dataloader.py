@@ -1,42 +1,46 @@
 """Script to return all the computer vision datasets.
 """
+import torch
 import torchvision
 
-def mnist_dataset(root_dir):
+from torchvision import transforms
+from torch.utils.data import random_split
+
+def mnist_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
 
     trainset = torchvision.datasets.MNIST(root=root_dir,
         train=True,
-        download=True,
+        download=False,
         transform=transform)
 
     testset = torchvision.datasets.MNIST(root=root_dir,
         train=False,
-        download=True,
+        download=False,
         transform=transform)
     
     return trainset, testset
 
-def fmnist_dataset(root_dir):
+def fmnist_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
 
     trainset = torchvision.datasets.FashionMNIST(root = root_dir,
         train=True,
-        download=True,
+        download=False,
         transform=transform)
 
     testset = torchvision.datasets.FashionMNIST(root=root_dir,
         train=False,
-        download=True,
+        download=False,
         transform=transform)
 
     return trainset, testset
 
-def kmnist_dataset(root_dir):
+def kmnist_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -53,7 +57,7 @@ def kmnist_dataset(root_dir):
 
     return trainset, testset
 
-def emnist_dataset(root_dir):
+def emnist_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -70,7 +74,7 @@ def emnist_dataset(root_dir):
 
     return trainset, testset
 
-def qmnist_dataset(root_dir):
+def qmnist_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -87,7 +91,7 @@ def qmnist_dataset(root_dir):
 
     return trainset, testset
 
-def cifar10_dataset(root_dir):
+def cifar10_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -108,7 +112,7 @@ def cifar10_dataset(root_dir):
 
     return trainset, testset
 
-def stl10_dataset(root_dir):
+def stl10_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -127,7 +131,7 @@ def stl10_dataset(root_dir):
 
     return trainset, testset
 
-def fake_dataset(root_dir):
+def fake_dataset(root_dir:str):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -154,31 +158,52 @@ def fake_dataset(root_dir):
 
     return trainset, testset
 
+def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int, n_classes: int, train_test_split:float, seed:int=42):
+    """Generate a synthetic dataset. 
+
+    Args:
+        max_sample_size (int): Maximum sample size of the dataset. 
+        n_informative (int): Number of informative features. 
+        n_features (int): Number of total features. 
+        n_classes (int): Number of total classes. 
+        train_test_split (float): Ratio of training to test. 
+        seed (int, optional): Seed of the dataset. Defaults to 42.
+
+    Returns:
+        trainset, testset: Training and testing dataset. 
+    """
+    sample_dataset = make_classification(n_samples=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes)
+    tensor_x = torch.Tensor(sample_dataset[0]) 
+    tensor_y = torch.LongTensor(sample_dataset[1]) 
+    dataset = TensorDataset(tensor_x,tensor_y) 
+    trainset, testset = random_split(dataset, [train_test_split, 1 - train_test_split], generator=torch.Generator().manual_seed(42))
+
+    return trainset, testset
 
 def dataloader_helper(dataset, root_dir):
     if(dataset == "MNIST"):
         return mnist_dataset(root_dir)
     
-    if(dataset == "FMNIST"):
+    elif(dataset == "FMNIST"):
         return fmnist_dataset(root_dir)
 
-    if(dataset == "KMNIST"):
+    elif(dataset == "KMNIST"):
         return kmnist_dataset(root_dir)
     
-    if(dataset == "EMNIST"):
+    elif(dataset == "EMNIST"):
         return emnist_dataset(root_dir)
     
-    if(dataset == "QMNIST"):
+    elif(dataset == "QMNIST"):
         return qmnist_dataset(root_dir)
     
-    if(dataset == "CIFAR10"):
+    elif(dataset == "CIFAR10"):
         return cifar10_dataset(root_dir)
     
-    if(dataset == "STL10"):
+    elif(dataset == "STL10"):
         return stl10_dataset(root_dir)
     
-    if(dataset == "FAKE"):
+    elif(dataset == "FAKE"):
         return fake_dataset(root_dir)
-
-
-    pass
+    
+    else:
+        return None

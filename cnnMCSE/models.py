@@ -70,3 +70,22 @@ class FCN(nn.Module):
         return x 
     
 
+
+def model_helper(model:str)->nn.Module:
+    """Method to return torch model. 
+
+    Args:
+        model (str): Name of the model.
+
+    Returns:
+        nn.Module: Model to return. 
+    """
+    if(model == "A3"):
+        return A3
+    
+    elif(model == "FCN"):
+        return FCN
+    
+    else:
+        return None
+    

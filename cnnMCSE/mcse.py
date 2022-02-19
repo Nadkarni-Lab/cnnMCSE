@@ -1,86 +1,23 @@
+"""Package to calculate sample size estimates for convolutional neural networks. 
+"""
+
+import numpy as np
+
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset
 import torch.optim as optim
-import numpy as np
+from torch.utils.data import TensorDataset
 
 from sklearn.datasets import make_classification
 from scipy.interpolate import UnivariateSpline
-import numpy as np
+
+from cnnMCSE.models import FCN, A3
 
 
 BATCH_SIZE = 4
 EPOCH = 1
 NUM_WORKERS = 2
 
-class A3(nn.Module):
-    def __init__(self, input_size: int=784, 
-        hidden_size_one: int = 1024, 
-        hidden_size_two : int = 512, 
-        hidden_size_three: int = 256, 
-        latent_classes: int = 2):
-        super(A3, self).__init__()
-        self.input_size = input_size
-        self.hidden_size_one = hidden_size_one
-        self.hidden_size_two = hidden_size_two
-        self.hidden_size_three = hidden_size_three
-
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size_one),
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_one, hidden_size_two), 
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_two, hidden_size_three), 
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_three, latent_classes))
-
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_classes, hidden_size_three),
-            nn.ReLU(True),
-            nn.Linear(hidden_size_three, hidden_size_two),
-            nn.ReLU(True),
-            nn.Linear(hidden_size_two, hidden_size_one),
-            nn.ReLU(True),
-            nn.Linear(hidden_size_one, input_size))
-
-    def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        return x
-
-    def forward_2(self, x):
-        x = self.encoder(x)
-        return x 
-
-class FCN(nn.Module):
-    def __init__(self, input_size: int=784, 
-        hidden_size_one: int = 1024, 
-        hidden_size_two : int = 512, 
-        hidden_size_three: int = 256, 
-        output_size: int = 10):
-        super(A3, self).__init__()
-        self.input_size = input_size
-        self.hidden_size_one = hidden_size_one
-        self.hidden_size_two = hidden_size_two
-        self.hidden_size_three = hidden_size_three
-        self.output_size = output_size
-
-        self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size_one),
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_one, hidden_size_two), 
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_two, hidden_size_three), 
-            nn.ReLU(True), 
-            nn.Linear(hidden_size_three, output_size))
-
-    def forward(self, x):
-        x = self.encoder(x)
-        return x
-
-    def forward_2(self, x):
-        x = self.encoder(x)
-        return x 
 
 def get_model_sample_size_A3(sample_size, trainset,
         input_size, 
@@ -277,22 +214,7 @@ def get_models_bootleg(model_name, sample_size, trainset, bootleg,noise_factor=1
 
     return models, models_train_loss
 
-def get_derivative(A3_loss_raw, sample_sizes):
-    log_sample_sizes = np.log(sample_sizes)
-    A3_loss_mean = [np.mean(a3_loss) for a3_loss in A3_loss_raw]
-    y_spl = UnivariateSpline(log_sample_sizes, A3_loss_mean,s=0,k=2)
-    y_spl_1d = y_spl.derivative(n=1)
-    y_spl_2d = y_spl.derivative(n=2)
-    
-    return y_spl, y_spl_1d, y_spl_2d
 
-def get_inflection_point(spl, spl_2D, sample_sizes):
-    log_sample_sizes = np.log(sample_sizes)
-    sample_size_peak = np.argmax(spl_2D(log_sample_sizes))
-    peak_A3 = spl(log_sample_sizes[sample_size_peak])
-    error_down = spl(log_sample_sizes[sample_size_peak+1])
-    error_up   = spl(log_sample_sizes[sample_size_peak-1])
-    return peak_A3, error_down, error_up
 
 def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
     sample_size_list = list()
@@ -311,67 +233,6 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
     sample_size_list.sort()
     print(sample_size_list)
     return sample_size_list
-
-def msse_predict(
-    max_sample_size : int = 1000, 
-    log_scale: int = 2, 
-    min_sample_size: int = 64, 
-    absolute_scale = None,
-    n_informative = 78, 
-    n_features = 784, 
-    n_classes=10,
-    bootleg=2,
-    hidden_size_one: int = 1024, 
-    hidden_size_two : int = 512, 
-    hidden_size_three: int = 256, 
-    latent_classes: int = 2):
-    
-    # generate sample sizes. 
-    sample_sizes = generate_sample_sizes(max_sample_size=max_sample_size, log_scale=log_scale, min_sample_size=min_sample_size, absolute_scale=absolute_scale)
-    
-    # generate dataset. 
-    sample_dataset = make_classification(n_samples=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes)
-    tensor_x = torch.Tensor(sample_dataset[0]) 
-    tensor_y = torch.LongTensor(sample_dataset[1]) 
-    sample_dataset = TensorDataset(tensor_x,tensor_y) 
-    
-    # collect bootstraps. 
-    A3_losses = list()
-    for sample_size in sample_sizes:
-        model_current_sample_size, training_loss_current_sample_size = get_models_bootleg_A3(
-                            sample_size=sample_size,
-                            trainset=sample_dataset,
-                            bootleg=bootleg,
-                            input_size=n_features,
-                            hidden_size_one = hidden_size_one, 
-                            hidden_size_two = hidden_size_two, 
-                            hidden_size_three = hidden_size_three, 
-                            latent_classes = latent_classes)
-        A3_losses.append(training_loss_current_sample_size)
-
-
-    print(A3_losses)
-    print(sample_sizes)
-    A3_loss_final = list()
-    sample_size_final = list()
-
-    for sample_size, A3_loss in zip(sample_sizes, A3_losses):
-        A3_loss_2 = [x for x in A3_loss if np.isnan(x) == False]
-        if(len(A3_loss_2) != 0):
-            A3_loss_final.append(A3_loss_2)
-            sample_size_final.append(sample_size)
-
-    print(A3_loss_final)
-    print(sample_size_final)
-
-    y_spl, y_spl_1D, y_spl_2D         = get_derivative(A3_loss_raw=A3_loss_final, sample_sizes=sample_size_final)
-    y_infl, y_infl_erd, y_infl_eru = get_inflection_point(y_spl, y_spl_2D, sample_sizes=sample_size_final)
-
-    msse_estimate = np.exp(y_infl)
-    print(msse_estimate)
-    return msse_estimate
-    # pass
-
 
 
 

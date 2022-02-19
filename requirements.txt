@@ -1,2 +1,4 @@
 sklearn
 torch
+scipy
+torchvision
