@@ -43,10 +43,10 @@ def get_inflection_point(spl, spl_2D, sample_sizes):
 
 
 
-def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
+def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = False):
     sample_size_list = list()
 
-    if(absolute_scale == None):
+    if(absolute_scale == False):
         sample_size = int(max_sample_size)
         while sample_size > min_sample_size:
             sample_size_list.append(sample_size)

@@ -5,7 +5,14 @@ from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inf
 def predict_loop(
     dataset:str,
     models:str,
-    root_dir:str
+    root_dir:str,
+    batch_size:int,
+    n_epochs:int,
+    n_workers:int,
+    max_sample_size:int,
+    log_scale:int,
+    min_sample_size:int,
+    absolute_scale:bool
     ):
 
     # return the training and testing datasets
@@ -16,6 +23,17 @@ def predict_loop(
     estimator, estimand = models
     estimator = model_helper(estimator)
     estimand = model_helper(estimand)
+
+    sample_sizes = generate_sample_sizes(
+        max_sample_size=max_sample_size, 
+        log_scale=log_scale, 
+        min_sample_size=min_sample_size, 
+        absolute_scale=absolute_scale
+    )
+
+    print(sample_sizes)
+
+
 
     print("Complete")
 
