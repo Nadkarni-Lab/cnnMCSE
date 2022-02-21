@@ -17,4 +17,4 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse
 
-python mnist-cnn-mcse.py --dataset MNIST --models A3,FCN --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data --n_bootstraps 5 --shuffle --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/weights
+python mnist-cnn-mcse.py --dataset MNIST --models A3,FCN --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data --n_bootstraps 5 --shuffle --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/weights --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/output/data.tsv

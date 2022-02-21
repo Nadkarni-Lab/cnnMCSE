@@ -20,6 +20,8 @@ def predict_loop(
     absolute_scale:bool,
     n_bootstraps:int,
     initial_weights_dir:str, 
+    out_data_path:str,
+    out_metadata_path:str=None, 
     start_seed:int = 42,
     shuffle:bool=False
     ):
@@ -56,7 +58,7 @@ def predict_loop(
     sample_sizes = sample_sizes[0:2]
     dfs = list()
     for sample_size in sample_sizes:
-        df = pd.DataFrame()
+        df_dict = {}
         print(sample_size)
         estimators = get_estimators(
             model = estimator,
@@ -81,8 +83,19 @@ def predict_loop(
             metric_type="AUC",
             initial_weights=initial_estimand_weights_path
         )
+        df_dict['estimators'] = estimators
+        df_dict['estimands']  = estimands
+        df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
+        df_dict['sample_size'] = [sample_size for i in range(n_bootstraps)]      
+        df = pd.DataFrame(df_dict)
+        dfs.append(df)
+    
+
         print(estimators)
         print(estimands)
+    
+    df = pd.concat(dfs)
+    df.to_csv(out_data_path, sep="\t")
 
 
     print("Complete")

@@ -21,6 +21,9 @@ if __name__ == "__main__":
     parser.add_argument("--initial_weights_dir", required=True, type=str,
                         help="Path to initial weights directory.")
     
+    parser.add_argument("--out_data_path", required=True, type=str,
+                        help="Path to output data.")
+    
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")
     
