@@ -1,6 +1,10 @@
+"""Generate estimators and estimands for sample size estimation with convolutional neural networks. 
+"""
+
 from cnnMCSE.dataloader import dataloader_helper
 from cnnMCSE.models import model_helper
 from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inflection_point
+from cnnMCSE.mcse import get_estimators
 
 def predict_loop(
     dataset:str,
@@ -12,7 +16,10 @@ def predict_loop(
     max_sample_size:int,
     log_scale:int,
     min_sample_size:int,
-    absolute_scale:bool
+    absolute_scale:bool,
+    n_bootstraps:int,
+    start_seed:int = 42,
+    shuffle:bool=False
     ):
 
     # return the training and testing datasets
@@ -20,9 +27,21 @@ def predict_loop(
 
     # return the models.
     models = models.split(",") 
+    print(models)
     estimator, estimand = models
+    print(estimator)
+    print(estimand)
     estimator = model_helper(estimator)
     estimand = model_helper(estimand)
+
+    print(estimator)
+    print(estimand)
+
+    estimator_x = estimator()
+    estimand_x = estimand()
+    print(estimator_x.parameters())
+    print(estimand_x.parameters())
+
 
     sample_sizes = generate_sample_sizes(
         max_sample_size=max_sample_size, 
@@ -32,6 +51,17 @@ def predict_loop(
     )
 
     print(sample_sizes)
+    estimators = get_estimators(
+        model = estimator,
+        training_data = trainset,
+        sample_size = sample_sizes[0],
+        batch_size = batch_size,
+        bootstraps = n_bootstraps,
+        start_seed = start_seed,
+        shuffle = shuffle
+    )
+
+    print(estimators)
 
 
 

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset
+from torch.utils.data import TensorDataset, random_split
 
 from sklearn.datasets import make_classification
 from scipy.interpolate import UnivariateSpline
@@ -17,6 +17,88 @@ from cnnMCSE.models import FCN, A3
 BATCH_SIZE = 4
 EPOCH = 1
 NUM_WORKERS = 2
+
+
+
+def get_estimators(
+    model,
+    training_data,
+    sample_size:int,
+    batch_size:int=4,
+    bootstraps:int=1,
+    start_seed:int=42,
+    shuffle:bool=False
+    ):
+
+    # run across all the bootstraps
+    losses = list()
+    for i in range(bootstraps):
+
+        # Create a generator for replicability. 
+        generator = torch.Generator().manual_seed(start_seed+i)
+
+        # generate a unique training subset.
+        train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
+        
+        print(len(train_subset))
+        # Create a training dataloader. 
+        trainloader = torch.utils.data.DataLoader(train_subset,
+                                              batch_size=batch_size,
+                                              shuffle=shuffle)
+        # Initialize current model. 
+        current_model = model()
+
+        # Parallelize current model. 
+        current_model = nn.DataParallel(current_model)
+
+        # Set model in training mode. 
+        current_model.train()
+
+        # Generate mean-squared error loss criterion
+        criterion = nn.MSELoss()
+
+        # Optimize model with stochastic gradient descent. 
+        optimizer_model = optim.SGD(current_model.parameters(), lr=0.01, momentum=0.9)
+
+        # Set up training loop
+        running_loss = 0.0
+        
+        # iterate over training subset. 
+        for i, data in enumerate(train_subset):
+
+            # Get data
+            inputs, labels = data
+            inputs = inputs.flatten()
+
+            # Zero parameter gradients
+            optimizer_model.zero_grad()
+
+            # Forward + backward + optimize
+            outputs = current_model(inputs)
+            loss = criterion(outputs, inputs)
+            loss.backward()
+            optimizer_model.step()
+
+
+            running_loss += loss.item()
+
+        # Add model to models and loss to training losses
+
+        loss = running_loss / sample_size
+        losses.append(loss)
+
+        # print(loss)
+        # print(current_model.state_dict())
+
+    return losses
+
+
+def get_estimands():
+    pass
+
+
+
+
 
 
 def get_model_sample_size_A3(sample_size, trainset,
@@ -214,25 +296,6 @@ def get_models_bootleg(model_name, sample_size, trainset, bootleg,noise_factor=1
 
     return models, models_train_loss
 
-
-
-def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
-    sample_size_list = list()
-
-    if(absolute_scale == None):
-        sample_size = int(max_sample_size)
-        while sample_size > min_sample_size:
-            sample_size_list.append(sample_size)
-            sample_size = int(sample_size / log_scale)
-        sample_size_list.append(min_sample_size)
-    
-    else:
-        for sample_size in range(min_sample_size, max_sample_size, absolute_scale):
-            sample_size_list.append(sample_size)
-        sample_size_list.append(max_sample_size)
-    sample_size_list.sort()
-    print(sample_size_list)
-    return sample_size_list
 
 
 

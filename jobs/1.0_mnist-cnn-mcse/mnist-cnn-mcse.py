@@ -18,6 +18,9 @@ if __name__ == "__main__":
     parser.add_argument("--root_dir", required=True, type=str,
                         help="Path to root directory.")
     
+    parser.add_argument("--n_bootstraps", required=True, type=int,
+                        help="Number of bootstraps to conduct.")
+    
     parser.add_argument("--batch_size", required=False, type=int, default=4,
                         help="Number of batches.")
     

@@ -45,7 +45,7 @@ class FCN(nn.Module):
         hidden_size_two : int = 512, 
         hidden_size_three: int = 256, 
         output_size: int = 10):
-        super(A3, self).__init__()
+        super(FCN, self).__init__()
         self.input_size = input_size
         self.hidden_size_one = hidden_size_one
         self.hidden_size_two = hidden_size_two
