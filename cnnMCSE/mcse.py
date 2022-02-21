@@ -12,6 +12,7 @@ from sklearn.datasets import make_classification
 from scipy.interpolate import UnivariateSpline
 
 from cnnMCSE.models import FCN, A3
+from cnnMCSE.metrics import metric_helper
 
 
 BATCH_SIZE = 4
@@ -24,11 +25,26 @@ def get_estimators(
     model,
     training_data,
     sample_size:int,
+    initial_weights:str, 
     batch_size:int=4,
     bootstraps:int=1,
     start_seed:int=42,
-    shuffle:bool=False
+    shuffle:bool=False,
     ):
+    """Method to get estimators for convergence samples. 
+
+    Args:
+        model (_type_): A model. 
+        training_data (_type_): Training data. 
+        sample_size (int): Sample size to estimate at. 
+        batch_size (int, optional): Batch size. Defaults to 4.
+        bootstraps (int, optional): Number of bootstraps. Defaults to 1.
+        start_seed (int, optional): Seed. Defaults to 42.
+        shuffle (bool, optional): Shuffle the dataset. Defaults to False.
+
+    Returns:
+        list: List of losses. 
+    """
 
     # run across all the bootstraps
     losses = list()
@@ -40,13 +56,13 @@ def get_estimators(
         # generate a unique training subset.
         train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
         
-        print(len(train_subset))
         # Create a training dataloader. 
         trainloader = torch.utils.data.DataLoader(train_subset,
                                               batch_size=batch_size,
                                               shuffle=shuffle)
         # Initialize current model. 
         current_model = model()
+        current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
         current_model = nn.DataParallel(current_model)
@@ -58,7 +74,7 @@ def get_estimators(
         criterion = nn.MSELoss()
 
         # Optimize model with stochastic gradient descent. 
-        optimizer_model = optim.SGD(current_model.parameters(), lr=0.01, momentum=0.9)
+        optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
 
         # Set up training loop
         running_loss = 0.0
@@ -79,27 +95,73 @@ def get_estimators(
             loss.backward()
             optimizer_model.step()
 
-
             running_loss += loss.item()
 
-        # Add model to models and loss to training losses
-
+        # Add loss
         loss = running_loss / sample_size
         losses.append(loss)
-
-        # print(loss)
-        # print(current_model.state_dict())
 
     return losses
 
 
-def get_estimands():
-    pass
+def get_estimands(
+    model,
+    training_data,
+    validation_data,
+    sample_size,
+    initial_weights:str,
+    batch_size:int=4,
+    bootstraps:int=1,
+    start_seed:int=42,
+    shuffle:bool=False,
+    metric_type:str="AUC"
+    ):
 
+    metrics = list()
+    for i in range(bootstraps):
+        # Create a generator for replicability. 
+        generator = torch.Generator().manual_seed(start_seed+i)
 
+        # generate a unique training subset.
+        train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
+        
+        # Create a training dataloader. 
+        trainloader = torch.utils.data.DataLoader(train_subset,
+                                              batch_size=batch_size,
+                                              shuffle=shuffle)
+        # Initialize current model. 
+        current_model = model()
+        current_model.load_state_dict(torch.load(initial_weights))
 
+        # Parallelize current model. 
+        current_model = nn.DataParallel(current_model)
 
+        # Set model in training mode. 
+        current_model.train()
 
+        # Assign CrossEntropyLoss and stochastic gradient descent optimizer. 
+        criterion = nn.CrossEntropyLoss()
+        optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
+
+        # Train the model.  
+        for i, data in enumerate(trainloader):
+            # Get data
+            inputs, labels = data
+            inputs = torch.flatten(inputs, start_dim=1)
+
+            # Zero parameter gradients
+            optimizer_model.zero_grad()
+
+            # Forward + backward + optimize
+            outputs = current_model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer_model.step()
+        
+        metric = metric_helper(model=current_model, dataset=validation_data, metric_type=metric_type)
+        metrics.append(metric)
+    
+    return metrics
 
 def get_model_sample_size_A3(sample_size, trainset,
         input_size, 
@@ -112,6 +174,7 @@ def get_model_sample_size_A3(sample_size, trainset,
 
     for i in range(bootleg):
         # print('Training model', (i+1))
+        print('Training model', i)
 
         # Get the training subset
         indices = np.random.randint(len(trainset), size=sample_size)

@@ -18,6 +18,9 @@ if __name__ == "__main__":
     parser.add_argument("--root_dir", required=True, type=str,
                         help="Path to root directory.")
     
+    parser.add_argument("--initial_weights_dir", required=True, type=str,
+                        help="Path to initial weights directory.")
+    
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")
     
@@ -41,6 +44,9 @@ if __name__ == "__main__":
     
     parser.add_argument("--absolute_scale", required=False, type=bool, default=False,
                         help="Run on an absolute rather than log scale.")
+    
+    parser.add_argument("--shuffle", action='store_true', 
+                        help="Shuffle the dataset.")
 
     config_kwargs = parser.parse_args()
     main(**vars(config_kwargs))

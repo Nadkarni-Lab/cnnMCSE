@@ -1,10 +1,11 @@
 """Generate estimators and estimands for sample size estimation with convolutional neural networks. 
 """
+import pandas as pd
 
 from cnnMCSE.dataloader import dataloader_helper
 from cnnMCSE.models import model_helper
 from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inflection_point
-from cnnMCSE.mcse import get_estimators
+from cnnMCSE.mcse import get_estimators, get_estimands
 
 def predict_loop(
     dataset:str,
@@ -18,6 +19,7 @@ def predict_loop(
     min_sample_size:int,
     absolute_scale:bool,
     n_bootstraps:int,
+    initial_weights_dir:str, 
     start_seed:int = 42,
     shuffle:bool=False
     ):
@@ -31,8 +33,8 @@ def predict_loop(
     estimator, estimand = models
     print(estimator)
     print(estimand)
-    estimator = model_helper(estimator)
-    estimand = model_helper(estimand)
+    estimator, initial_estimator_weights_path = model_helper(model=estimator, initial_weights_dir=initial_weights_dir)
+    estimand, initial_estimand_weights_path = model_helper(model=estimand, initial_weights_dir=initial_weights_dir)
 
     print(estimator)
     print(estimand)
@@ -51,18 +53,36 @@ def predict_loop(
     )
 
     print(sample_sizes)
-    estimators = get_estimators(
-        model = estimator,
-        training_data = trainset,
-        sample_size = sample_sizes[0],
-        batch_size = batch_size,
-        bootstraps = n_bootstraps,
-        start_seed = start_seed,
-        shuffle = shuffle
-    )
+    sample_sizes = sample_sizes[0:2]
+    dfs = list()
+    for sample_size in sample_sizes:
+        df = pd.DataFrame()
+        print(sample_size)
+        estimators = get_estimators(
+            model = estimator,
+            training_data = trainset,
+            sample_size = sample_size,
+            batch_size = batch_size,
+            bootstraps = n_bootstraps,
+            start_seed = start_seed,
+            shuffle = shuffle,
+            initial_weights=initial_estimator_weights_path
+        )
 
-    print(estimators)
-
+        estimands = get_estimands(
+            model = estimand,
+            training_data = trainset,
+            validation_data = testset,
+            sample_size = sample_size,
+            batch_size=batch_size,
+            bootstraps=n_bootstraps,
+            start_seed=start_seed,
+            shuffle=shuffle,
+            metric_type="AUC",
+            initial_weights=initial_estimand_weights_path
+        )
+        print(estimators)
+        print(estimands)
 
 
     print("Complete")

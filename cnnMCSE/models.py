@@ -1,3 +1,5 @@
+import os
+import torch
 import torch.nn as nn
 
 class A3(nn.Module):
@@ -39,6 +41,73 @@ class A3(nn.Module):
         x = self.encoder(x)
         return x 
 
+
+class FCN(nn.Module):
+    """
+    A simple fully connected network used to approximate the quantify the
+    learnability of datasets at different sample sizes.
+    """
+    def __init__(self):
+        """
+        Initialization of the fully connected network with an input dimension of
+        784, a linear layer with 36 hidden units, ReLU activation, followed by
+        a linear layer with 16 hidden units, ReLU activation, followed by
+        the output layer.
+        """
+        super(FCN, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Linear(784, 36),
+            nn.ReLU(),
+        )
+        self.layer2 = nn.Sequential(
+            nn.Linear(36, 16),
+            nn.ReLU()
+        )
+        self.fc = nn.Linear(16, 10)
+
+    def forward(self, x):
+        """
+        Forward pass of the fully connected network.
+        """
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.view(out.size(0),  -1)
+        out = self.fc(out)
+        return out
+
+# class FCN2(nn.Module):
+#     """
+#     A simple fully connected network used to approximate the quantify the
+#     learnability of datasets at different sample sizes.
+#     """
+#     def __init__(self):
+#         """
+#         Initialization of the fully connected network with an input dimension of
+#         784, a linear layer with 36 hidden units, ReLU activation, followed by
+#         a linear layer with 16 hidden units, ReLU activation, followed by
+#         the output layer.
+#         """
+#         super(FCN, self).__init__()
+#         self.layer1 = nn.Sequential(
+#             nn.Linear(784, 36),
+#             nn.ReLU(),
+#         )
+#         self.layer2 = nn.Sequential(
+#             nn.Linear(36, 16),
+#             nn.ReLU()
+#         )
+#         self.fc = nn.Linear(16, 10)
+
+#     def forward(self, x):
+#         """
+#         Forward pass of the fully connected network.
+#         """
+#         out = self.layer1(x)
+#         out = self.layer2(out)
+#         out = out.view(out.size(0),  -1)
+#         out = self.fc(out)
+#         return out
+
 class FCN(nn.Module):
     def __init__(self, input_size: int=784, 
         hidden_size_one: int = 1024, 
@@ -67,11 +136,10 @@ class FCN(nn.Module):
 
     def forward_2(self, x):
         x = self.encoder(x)
-        return x 
-    
+        return x     
 
 
-def model_helper(model:str)->nn.Module:
+def model_helper(model:str, initial_weights_dir:str)->nn.Module:
     """Method to return torch model. 
 
     Args:
@@ -81,10 +149,16 @@ def model_helper(model:str)->nn.Module:
         nn.Module: Model to return. 
     """
     if(model == "A3"):
-        return A3
+        a3 = A3()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(a3.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
     
     elif(model == "FCN"):
-        return FCN
+        fcn = FCN()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(fcn.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
     
     else:
         return None
