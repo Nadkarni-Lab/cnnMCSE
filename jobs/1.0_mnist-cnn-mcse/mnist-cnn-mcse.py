@@ -24,6 +24,9 @@ if __name__ == "__main__":
     parser.add_argument("--out_data_path", required=True, type=str,
                         help="Path to output data.")
     
+    parser.add_argument("--out_metadata_path", required=True, type=str,
+                        help="Path to output metadata with MCSE estimates.")
+    
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")
     
@@ -46,6 +49,9 @@ if __name__ == "__main__":
                         help="Minimum estimated sample size.")
     
     parser.add_argument("--absolute_scale", required=False, type=bool, default=False,
+                        help="Run on an absolute rather than log scale.")
+    
+    parser.add_argument("--num_workers", required=False, type=int, default=4,
                         help="Run on an absolute rather than log scale.")
     
     parser.add_argument("--shuffle", action='store_true', 

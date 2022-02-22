@@ -1,11 +1,13 @@
 """Generate estimators and estimands for sample size estimation with convolutional neural networks. 
 """
+import gc
 import pandas as pd
 
 from cnnMCSE.dataloader import dataloader_helper
 from cnnMCSE.models import model_helper
 from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inflection_point
 from cnnMCSE.mcse import get_estimators, get_estimands
+from cnnMCSE.utils.helpers import estimate_mcse
 
 def predict_loop(
     dataset:str,
@@ -21,9 +23,11 @@ def predict_loop(
     n_bootstraps:int,
     initial_weights_dir:str, 
     out_data_path:str,
+    state_dict_dir:str=None,
     out_metadata_path:str=None, 
     start_seed:int = 42,
-    shuffle:bool=False
+    shuffle:bool=False,
+    num_workers:int=4
     ):
 
     # return the training and testing datasets
@@ -55,7 +59,7 @@ def predict_loop(
     )
 
     print(sample_sizes)
-    sample_sizes = sample_sizes[0:2]
+    # sample_sizes = sample_sizes[0:2]
     dfs = list()
     for sample_size in sample_sizes:
         df_dict = {}
@@ -68,8 +72,10 @@ def predict_loop(
             bootstraps = n_bootstraps,
             start_seed = start_seed,
             shuffle = shuffle,
-            initial_weights=initial_estimator_weights_path
+            initial_weights=initial_estimator_weights_path,
+            num_workers=num_workers
         )
+        
 
         estimands = get_estimands(
             model = estimand,
@@ -81,8 +87,10 @@ def predict_loop(
             start_seed=start_seed,
             shuffle=shuffle,
             metric_type="AUC",
-            initial_weights=initial_estimand_weights_path
+            initial_weights=initial_estimand_weights_path,
+            num_workers=num_workers
         )
+
         df_dict['estimators'] = estimators
         df_dict['estimands']  = estimands
         df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
@@ -90,12 +98,18 @@ def predict_loop(
         df = pd.DataFrame(df_dict)
         dfs.append(df)
     
-
         print(estimators)
         print(estimands)
+        gc.collect()
     
     df = pd.concat(dfs)
     df.to_csv(out_data_path, sep="\t")
+
+    estimate_mcse(df, out_metadata_path)
+
+
+
+
 
 
     print("Complete")

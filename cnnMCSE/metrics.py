@@ -1,10 +1,12 @@
 """Metrics.py contains all the metrics for machine learning validation. 
 """
 import torch
+import torch.nn as nn
+
 from sklearn import metrics
 from sklearn.preprocessing import label_binarize
 
-def get_AUC(model, dataset, num_workers:int=2, num_classes:int=10):
+def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10):
     """Get Area-Under-Curve Metric on a test dataset. 
 
     Args:
@@ -14,53 +16,67 @@ def get_AUC(model, dataset, num_workers:int=2, num_classes:int=10):
     Returns:
         float: AUC metric. 
     """
-
-    # print('Testset:',len(testset))
-    loader  = torch.utils.data.DataLoader(dataset,
-                                          batch_size=len(dataset),
-                                          shuffle=False,
-                                          num_workers=num_workers)
-
-    # current_model = FCN()
-
-    # current_model = nn.DataParallel(current_model)
-    # current_model.to(DEVICE)
-
-    # current_model.load_state_dict(model_state)
-
-    # current_model.eval()
-
     current_model = model
+    current_model = nn.DataParallel(current_model)
     current_model.eval()
 
     model_predictions = []
     model_labels      = []
+
+    print("Generating predictions")
+    print(len(loader))
     with torch.no_grad():
-        for data in loader:
+        for index, data in enumerate(loader):
+            print("Running index", index)
             images, labels = data
             images = torch.flatten(images, start_dim=1)
 
             # images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = current_model(images)
             _, predicted = torch.max(output.data, 1)
-        for prediction in predicted:
-            model_predictions.append(prediction.tolist())
-        for label in labels:
-            model_labels.append(label.tolist())
+            model_predictions = model_predictions + predicted.tolist()
+            model_labels = model_labels + labels.tolist()
+            # model_predictions.append(predicted.tolist())
+            #print('Predictions', predicted.shape)
+        # for prediction in predicted:
+        #     #print('Predicted', prediction.shape)
+        #     model_predictions.append(prediction.tolist())
+        # for label in labels:
+        #     #print('Labels', label.shape)
+        #     model_labels.append(label.tolist())
 
+
+    print('Model Labels', len(model_labels))
+    print('Model Predictions',len(model_predictions))
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-
+    print("Calculating AUC.")
     class_list = [i for i in range(num_classes)]
     labels_binarized = label_binarize(model_labels, classes=class_list)
     predictions_binarized = label_binarize(model_predictions, classes=class_list)
 
+    print("Getting ROC curve. ")
     fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
     roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
+    print(roc_auc['micro'])
     return roc_auc['micro']
 
 
-def metric_helper(model, dataset, metric_type:str):
+def get_aucs(models:list, dataset, num_workers:int=0):
+    loader  = torch.utils.data.DataLoader(dataset,
+                                            batch_size=256,
+                                            shuffle=False,
+                                            num_workers=num_workers)
+    aucs = list()
+    for index, model in enumerate(models):
+        print(f"Running model... {index} ")
+        auc = get_AUC(model=model, loader=loader)
+        aucs.append(auc)
+    
+    return aucs
+
+def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1):
     if(metric_type == "AUC"):
-        return get_AUC(model, dataset)
+        return get_aucs(models=models, dataset=dataset, num_workers=num_workers)
+        #return get_AUC(model=model, dataset=dataset, loader=loader)
