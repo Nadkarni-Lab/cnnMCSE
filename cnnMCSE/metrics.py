@@ -17,6 +17,7 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
         float: AUC metric. 
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
 
     current_model = model
     current_model = nn.DataParallel(current_model)
@@ -28,19 +29,19 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
 
     print("Generating predictions")
     print(len(loader))
-    with torch.no_grad():
-        print("Broken here....")
-        for index, data in enumerate(loader):
-            print("Running index", index)
-            images, labels = data
-            images = torch.flatten(images, start_dim=1)
-            images, labels = images.to(device), labels.to(device)
+    #with torch.no_grad():
+    print("Broken here....")
+    for index, data in enumerate(loader):
+        print("Running index", index)
+        images, labels = data
+        images = torch.flatten(images, start_dim=1)
+        images, labels = images.to(device), labels.to(device)
 
-            # images, labels = images.to(DEVICE), labels.to(DEVICE)
-            output = current_model(images)
-            _, predicted = torch.max(output.data, 1)
-            model_predictions = model_predictions + predicted.tolist()
-            model_labels = model_labels + labels.tolist()
+        # images, labels = images.to(DEVICE), labels.to(DEVICE)
+        output = current_model(images)
+        _, predicted = torch.max(output.data, 1)
+        model_predictions = model_predictions + predicted.tolist()
+        model_labels = model_labels + labels.tolist()
             # model_predictions.append(predicted.tolist())
             #print('Predictions', predicted.shape)
         # for prediction in predicted:

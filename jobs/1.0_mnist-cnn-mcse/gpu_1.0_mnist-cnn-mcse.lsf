@@ -1,9 +1,10 @@
 #BSUB -J ptile_cnnMCSE 
 #BSUB -P acc_mscic1 
 #BSUB -q gpu 
-#BSUB -n 8
+#BSUB -n 4
 #BSUB -W 6:00 
-#BSUB -R rusage[mem=16000]
+#BSUB -R rusage[mem=150000]
+#BSUB -R himem
 #BSUB -R span[ptile=4]
 #BSUB -R rusage[ngpus_excl_p=1]
 #BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/logs/%J.stdout 

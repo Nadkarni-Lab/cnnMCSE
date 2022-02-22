@@ -50,6 +50,7 @@ def get_estimators(
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
 
     # run across all the bootstraps
     losses = list()
@@ -105,7 +106,7 @@ def get_estimators(
             # Get data
             inputs, labels = data
             inputs = inputs.flatten()
-            inputs, labels = inputs.to(device), (labels).to(device)
+            inputs, labels = inputs.to(device), labels.to(device)
 
 
             # Zero parameter gradients
@@ -158,6 +159,7 @@ def get_estimands(
         list: List of estimation. 
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
 
     print("Getting estimands")
     models = list()
