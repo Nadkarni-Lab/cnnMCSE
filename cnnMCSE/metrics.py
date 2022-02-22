@@ -16,8 +16,11 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     Returns:
         float: AUC metric. 
     """
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     current_model = model
     current_model = nn.DataParallel(current_model)
+    current_model.to(device)
     current_model.eval()
 
     model_predictions = []
@@ -26,10 +29,12 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     print("Generating predictions")
     print(len(loader))
     with torch.no_grad():
+        print("Broken here....")
         for index, data in enumerate(loader):
             print("Running index", index)
             images, labels = data
             images = torch.flatten(images, start_dim=1)
+            images, labels = images.to(device), labels.to(device)
 
             # images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = current_model(images)

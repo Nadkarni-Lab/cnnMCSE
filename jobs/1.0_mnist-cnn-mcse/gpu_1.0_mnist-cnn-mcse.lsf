@@ -28,4 +28,3 @@ python mnist-cnn-mcse.py --dataset MNIST \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/weights \
     --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/output/data.tsv \
     --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1.0_mnist-cnn-mcse/output/metadata.tsv 
-    --gpu

@@ -48,10 +48,8 @@ def get_estimators(
         list: List of losses. 
     """
 
-    if torch.cuda.is_available(): 
-        gpu = True
-        device = torch.cuda.get_device_name(0)
-    else: gpu = False
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # run across all the bootstraps
     losses = list()
@@ -80,8 +78,8 @@ def get_estimators(
 
         # Parallelize current model. 
         print("Parallelize current model. ")
-        if(gpu): current_model.to(device)
         current_model = nn.DataParallel(current_model)
+        current_model.to(device)
 
         # Set model in training mode. 
         print("Set model in training mode. ")
@@ -106,10 +104,9 @@ def get_estimators(
 
             # Get data
             inputs, labels = data
-            if(gpu): 
-                inputs.to(device)
-                labels.to(device)
             inputs = inputs.flatten()
+            inputs, labels = inputs.to(device), (labels).to(device)
+
 
             # Zero parameter gradients
             optimizer_model.zero_grad()
@@ -160,6 +157,7 @@ def get_estimands(
     Returns:
         list: List of estimation. 
     """
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     print("Getting estimands")
     models = list()
@@ -190,6 +188,7 @@ def get_estimands(
         # Parallelize current model. 
         print("Parallelize current model.")
         current_model = nn.DataParallel(current_model)
+        current_model.to(device)
 
         # Set model in training mode. 
         print("Set model in training mode")
@@ -207,6 +206,7 @@ def get_estimands(
             # Get data
             inputs, labels = data
             inputs = torch.flatten(inputs, start_dim=1)
+            inputs, labels = inputs.to(device), labels.to(device)
 
             # Zero parameter gradients
             optimizer_model.zero_grad()
