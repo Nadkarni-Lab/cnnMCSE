@@ -122,7 +122,7 @@ def get_estimators(
 
         # Add loss
         loss = running_loss / sample_size
-        losses.append(loss)
+        losses.append(float(loss))
 
     gc.collect()
     return losses

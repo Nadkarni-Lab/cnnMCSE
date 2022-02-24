@@ -16,31 +16,46 @@ def get_derivative(loss_list:list, sample_sizes:list):
     """
     log_sample_sizes = np.log(sample_sizes)
     loss_mean = [np.mean(loss) for loss in loss_list]
-    y_spl = UnivariateSpline(log_sample_sizes, A3_loss_mean,s=0,k=2)
+    y_spl = UnivariateSpline(log_sample_sizes, loss_mean,s=0,k=2)
     y_spl_1d = y_spl.derivative(n=1)
     y_spl_2d = y_spl.derivative(n=2)
     
     return y_spl, y_spl_1d, y_spl_2d
 
-def get_inflection_point(spl, spl_2D, sample_sizes):
+def get_inflection_point(spl, spl_2D, sample_sizes, estimator:bool=True):
     """Get the inflection point and the errors. 
 
     Args:
         spl (spline): Spline. 
         spl_2D (spline): Second derivative
         sample_sizes (list): List of sample sizes. 
+        estimator (bool): Estimator of all 
 
     Returns:
         peak_A3, error_down, error_up: peak and the error up and error down. 
     """
     log_sample_sizes = np.log(sample_sizes)
-    sample_size_peak = np.argmax(spl_2D(log_sample_sizes))
-    peak_A3 = spl(log_sample_sizes[sample_size_peak])
-    error_down = spl(log_sample_sizes[sample_size_peak+1])
-    error_up   = spl(log_sample_sizes[sample_size_peak-1])
-    return peak_A3, error_down, error_up
+    if(estimator == True):
+        sample_size_peak = np.argmin((spl_2D(log_sample_sizes)))
+    else:
+        sample_size_peak = np.argmax((spl_2D(log_sample_sizes)))
+    peak = (log_sample_sizes[sample_size_peak])
+    error_down = (log_sample_sizes[sample_size_peak+1])
+    error_up   = (log_sample_sizes[sample_size_peak-1])
+    return peak, error_down, error_up
 
+def get_power(spl, value:float):
+    """Get the power at a given value. 
 
+    Args:
+        spl (spl): Power curve. 
+        value (float): Value to estimate power at
+
+    Returns:
+        float: Power estimate. 
+    """
+
+    return spl(value)
 def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
     """Method to estimate minimum convergence sample from pandas dataframe. 
 
@@ -51,26 +66,50 @@ def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
 
     # generate list of sample sizes. 
     sample_sizes = list(df['sample_size'].unique())
+    print(f"Generating sample sizes, {sample_sizes}")
 
     # generate list of losses (estimator)
     loss_list = list()
+    auc_list = list()
     for sample_size in sample_sizes:
         sample_size_df = df[df['sample_size'] == sample_size]
         sample_size_estimators = sample_size_df['estimators'].tolist()
-        loss_list.append(loss_list)
+        sample_size_estimands = sample_size_df['estimands'].tolist()
+        loss_list.append(sample_size_estimators)
+        auc_list.append(sample_size_estimands)
+        print(f"Adding losses .... {loss_list}")
+        print(f"Adding AUCs .... {auc_list}")
     
     # estimate the spline. 
-    estimator_spl, estimator_spl_1d, estimator_spl_2d = get_derivative(loss_list=loss_list, sample_sizes=sample_sizes)
+    print("Estimating the spline.")
+    estimator_spl, _, estimator_spl_2d = get_derivative(loss_list=loss_list, sample_sizes=sample_sizes)
+    estimand_spl,  _, estimand_spl_2d  = get_derivative(loss_list=auc_list, sample_sizes=sample_sizes)
+
 
     # estimate the peaks and error bars. 
-    peak_estimator, error_down, error_up = get_inflection_point(spl=estimator_spl, spl_2D=estimator_spl_2d)
+    print("Estimating peaks and errors.")
+    peak_estimator, error_down, error_up  = get_inflection_point(spl=estimator_spl, spl_2D=estimator_spl_2d, sample_sizes=sample_sizes, estimator = True)
+    peak_estimand, estimand_down, estimand_up = get_inflection_point(spl=estimand_spl, spl_2D=estimand_spl_2d, sample_sizes=sample_sizes, estimator = False)
+
+    power_estimator = get_power(spl=estimand_spl, value=peak_estimator)
+    power_down  = get_power(spl=estimand_spl, value=error_down), 
+    power_up = get_power(spl=estimand_spl, value=error_up)
 
     # generate metadata output file. 
     out_metadata_dict = {}
-    out_metadata_dict['mcse'] = peak_estimator
-    out_metadata_dict['mcse_error_up'] = error_up
-    out_metadata_dict['mcse_error_down'] = error_down
+    out_metadata_dict['mcse'] = [peak_estimator]
+    out_metadata_dict['mcse_error_up'] = [error_up]
+    out_metadata_dict['mcse_error_down'] = [error_down]
+    out_metadata_dict['mcse_power'] = [power_estimator]
+    out_metadata_dict['mcse_power_up'] = [power_up]
+    out_metadata_dict['mcse_power_down'] = [power_down]
+
+    out_metadata_dict['mcs'] = [peak_estimand]
+    out_metadata_dict['mcs_error_up'] = [estimand_up]
+    out_metadata_dict['mcs_error_down'] = [estimand_down]
+
     out_metadata_df = pd.DataFrame(out_metadata_dict)
+    print(out_metadata_df)
     out_metadata_df.to_csv(out_metadata_path, sep="\t")
 
 

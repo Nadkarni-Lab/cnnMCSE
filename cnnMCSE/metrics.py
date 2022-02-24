@@ -66,7 +66,7 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
     roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
     print(roc_auc['micro'])
-    return roc_auc['micro']
+    return float(roc_auc['micro'])
 
 
 def get_aucs(models:list, dataset, num_workers:int=0):

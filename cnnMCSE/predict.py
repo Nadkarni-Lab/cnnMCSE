@@ -104,7 +104,7 @@ def predict_loop(
     
     df = pd.concat(dfs)
     df.to_csv(out_data_path, sep="\t")
-
+    print("Estimating MCSE")
     estimate_mcse(df, out_metadata_path)
 
 
