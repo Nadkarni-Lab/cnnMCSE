@@ -105,7 +105,7 @@ def get_estimators(
 
             # Get data
             inputs, labels = data
-            inputs = inputs.flatten()
+            #inputs = inputs.flatten()
             inputs, labels = inputs.to(device), labels.to(device)
 
 
@@ -114,6 +114,9 @@ def get_estimators(
 
             # Forward + backward + optimize
             outputs = current_model(inputs)
+
+            # Accomodate for intra-model flattening. 
+            inputs = inputs.reshape(outputs.shape)
             loss = criterion(outputs, inputs)
             loss.backward()
             optimizer_model.step()
@@ -207,7 +210,7 @@ def get_estimands(
             print("Testing data ", j)
             # Get data
             inputs, labels = data
-            inputs = torch.flatten(inputs, start_dim=1)
+            #inputs = torch.flatten(inputs, start_dim=1)
             inputs, labels = inputs.to(device), labels.to(device)
 
             # Zero parameter gradients

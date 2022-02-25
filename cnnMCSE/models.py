@@ -33,6 +33,7 @@ class A3(nn.Module):
             nn.Linear(hidden_size_one, input_size))
 
     def forward(self, x):
+        x = torch.flatten(x, start_dim=1)
         x = self.encoder(x)
         x = self.decoder(x)
         return x
@@ -42,38 +43,38 @@ class A3(nn.Module):
         return x 
 
 
-class FCN(nn.Module):
-    """
-    A simple fully connected network used to approximate the quantify the
-    learnability of datasets at different sample sizes.
-    """
-    def __init__(self):
-        """
-        Initialization of the fully connected network with an input dimension of
-        784, a linear layer with 36 hidden units, ReLU activation, followed by
-        a linear layer with 16 hidden units, ReLU activation, followed by
-        the output layer.
-        """
-        super(FCN, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Linear(784, 36),
-            nn.ReLU(),
-        )
-        self.layer2 = nn.Sequential(
-            nn.Linear(36, 16),
-            nn.ReLU()
-        )
-        self.fc = nn.Linear(16, 10)
+# class FCN(nn.Module):
+#     """
+#     A simple fully connected network used to approximate the quantify the
+#     learnability of datasets at different sample sizes.
+#     """
+#     def __init__(self):
+#         """
+#         Initialization of the fully connected network with an input dimension of
+#         784, a linear layer with 36 hidden units, ReLU activation, followed by
+#         a linear layer with 16 hidden units, ReLU activation, followed by
+#         the output layer.
+#         """
+#         super(FCN, self).__init__()
+#         self.layer1 = nn.Sequential(
+#             nn.Linear(784, 36),
+#             nn.ReLU(),
+#         )
+#         self.layer2 = nn.Sequential(
+#             nn.Linear(36, 16),
+#             nn.ReLU()
+#         )
+#         self.fc = nn.Linear(16, 10)
 
-    def forward(self, x):
-        """
-        Forward pass of the fully connected network.
-        """
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = out.view(out.size(0),  -1)
-        out = self.fc(out)
-        return out
+#     def forward(self, x):
+#         """
+#         Forward pass of the fully connected network.
+#         """
+#         out = self.layer1(x)
+#         out = self.layer2(out)
+#         out = out.view(out.size(0),  -1)
+#         out = self.fc(out)
+#         return out
 
 # class FCN2(nn.Module):
 #     """
@@ -131,6 +132,7 @@ class FCN(nn.Module):
             nn.Linear(hidden_size_three, output_size))
 
     def forward(self, x):
+        x = torch.flatten(x, start_dim=1)
         x = self.encoder(x)
         return x
 
