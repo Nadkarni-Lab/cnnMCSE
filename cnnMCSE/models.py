@@ -1,6 +1,8 @@
 import os
+from turtle import forward
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class A3(nn.Module):
     def __init__(self, input_size: int=784, 
@@ -42,73 +44,6 @@ class A3(nn.Module):
         x = self.encoder(x)
         return x 
 
-
-# class FCN(nn.Module):
-#     """
-#     A simple fully connected network used to approximate the quantify the
-#     learnability of datasets at different sample sizes.
-#     """
-#     def __init__(self):
-#         """
-#         Initialization of the fully connected network with an input dimension of
-#         784, a linear layer with 36 hidden units, ReLU activation, followed by
-#         a linear layer with 16 hidden units, ReLU activation, followed by
-#         the output layer.
-#         """
-#         super(FCN, self).__init__()
-#         self.layer1 = nn.Sequential(
-#             nn.Linear(784, 36),
-#             nn.ReLU(),
-#         )
-#         self.layer2 = nn.Sequential(
-#             nn.Linear(36, 16),
-#             nn.ReLU()
-#         )
-#         self.fc = nn.Linear(16, 10)
-
-#     def forward(self, x):
-#         """
-#         Forward pass of the fully connected network.
-#         """
-#         out = self.layer1(x)
-#         out = self.layer2(out)
-#         out = out.view(out.size(0),  -1)
-#         out = self.fc(out)
-#         return out
-
-# class FCN2(nn.Module):
-#     """
-#     A simple fully connected network used to approximate the quantify the
-#     learnability of datasets at different sample sizes.
-#     """
-#     def __init__(self):
-#         """
-#         Initialization of the fully connected network with an input dimension of
-#         784, a linear layer with 36 hidden units, ReLU activation, followed by
-#         a linear layer with 16 hidden units, ReLU activation, followed by
-#         the output layer.
-#         """
-#         super(FCN, self).__init__()
-#         self.layer1 = nn.Sequential(
-#             nn.Linear(784, 36),
-#             nn.ReLU(),
-#         )
-#         self.layer2 = nn.Sequential(
-#             nn.Linear(36, 16),
-#             nn.ReLU()
-#         )
-#         self.fc = nn.Linear(16, 10)
-
-#     def forward(self, x):
-#         """
-#         Forward pass of the fully connected network.
-#         """
-#         out = self.layer1(x)
-#         out = self.layer2(out)
-#         out = out.view(out.size(0),  -1)
-#         out = self.fc(out)
-#         return out
-
 class FCN(nn.Module):
     def __init__(self, input_size: int=784, 
         hidden_size_one: int = 1024, 
@@ -141,6 +76,60 @@ class FCN(nn.Module):
         return x     
 
 
+class cnnAE(nn.Module):
+    def __init__(self) -> None:
+        super(cnnAE, self).__init__()       
+        # Encoder layers
+        self.conv1 = nn.Conv2d(1, 16, 3, padding=1)  
+        self.conv2 = nn.Conv2d(16, 4, 3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+       
+        # Decoder layers
+        self.t_conv1 = nn.ConvTranspose2d(4, 16, 2, stride=2)
+        self.t_conv2 = nn.ConvTranspose2d(16, 1, 2, stride=2)
+    
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        print(x.shape)
+        x = self.pool(x)
+        print(x.shape)
+        x = F.relu(self.conv2(x))
+        print(x.shape)
+        x = self.pool(x)
+        print(x.shape)
+        x = F.relu(self.t_conv1(x))
+        print(x.shape)
+        x = (self.t_conv2(x))
+        print(x.shape)
+
+        return x
+
+class cnnFCN(nn.Module):
+    def __init__(self) -> None:
+        super(cnnFCN, self).__init__()
+        # Encoder layers
+
+        self.conv1 = nn.Conv2d(1, 16, 3, padding=1)  
+        self.conv2 = nn.Conv2d(16, 4, 3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.linear = nn.Linear(in_features=196, out_features=10)
+    
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        print(x.shape)
+        x = self.pool(x)
+        print(x.shape)
+        x = F.relu(self.conv2(x))
+        print(x.shape)
+        x = self.pool(x)
+        print(x.shape)
+        x = torch.flatten(x, start_dim=1)
+        print(x.shape)
+        x = (self.linear(x))
+        print(x.shape)
+        return x
+
+
 def model_helper(model:str, initial_weights_dir:str)->nn.Module:
     """Method to return torch model. 
 
@@ -161,6 +150,18 @@ def model_helper(model:str, initial_weights_dir:str)->nn.Module:
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(fcn.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
+    
+    elif(model == "cnnAE"):
+        initial_model = cnnAE()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return cnnAE, initial_weights_path
+    
+    elif(model == "cnnFCN"):
+        initial_model = cnnFCN()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return cnnFCN, initial_weights_path
     
     else:
         return None

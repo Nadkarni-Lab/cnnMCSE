@@ -113,10 +113,12 @@ def get_estimators(
             optimizer_model.zero_grad()
 
             # Forward + backward + optimize
+            print(inputs.shape)
             outputs = current_model(inputs)
-
+            print('Output shape', outputs.shape)
             # Accomodate for intra-model flattening. 
             inputs = inputs.reshape(outputs.shape)
+            print('Input shape', inputs.shape)
             loss = criterion(outputs, inputs)
             loss.backward()
             optimizer_model.step()
@@ -218,6 +220,10 @@ def get_estimands(
 
             # Forward + backward + optimize
             outputs = current_model(inputs)
+
+            print(outputs.shape)
+            print(labels.shape)
+
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer_model.step()

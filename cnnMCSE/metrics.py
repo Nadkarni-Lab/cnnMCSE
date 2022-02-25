@@ -34,7 +34,6 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     for index, data in enumerate(loader):
         print("Running index", index)
         images, labels = data
-        images = torch.flatten(images, start_dim=1)
         images, labels = images.to(device), labels.to(device)
 
         # images, labels = images.to(DEVICE), labels.to(DEVICE)
