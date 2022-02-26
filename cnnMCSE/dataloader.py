@@ -6,10 +6,26 @@ import torchvision
 from torchvision import transforms
 from torch.utils.data import random_split
 
-def mnist_dataset(root_dir:str):
+def mnist_dataset(root_dir:str, tl_transforms:bool=False):
+    """MNIST dataset. 
+
+    Args:
+        root_dir (str): Path to the root directory of the dataset. 
+        tl_transforms (bool, optional): Transfer learning transforms. Defaults to False.
+
+    Returns:
+        torchvision.datasets, torchvision.datasets: A torchvision dataset appropriately transformed.  
+    """
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.MNIST(root=root_dir,
         train=True,
@@ -180,9 +196,9 @@ def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int,
 
     return trainset, testset
 
-def dataloader_helper(dataset, root_dir):
+def dataloader_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "MNIST"):
-        return mnist_dataset(root_dir)
+        return mnist_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "FMNIST"):
         return fmnist_dataset(root_dir)
