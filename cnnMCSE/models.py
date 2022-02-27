@@ -1,10 +1,15 @@
 import os
 from turtle import forward
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import torchvision.models as mo
+
 class A3(nn.Module):
+    """Fully connected network autoencoder. 
+    """
     def __init__(self, input_size: int=784, 
         hidden_size_one: int = 1024, 
         hidden_size_two : int = 512, 
@@ -45,6 +50,8 @@ class A3(nn.Module):
         return x 
 
 class FCN(nn.Module):
+    """Fully connected neural network classifier. 
+    """
     def __init__(self, input_size: int=784, 
         hidden_size_one: int = 1024, 
         hidden_size_two : int = 512, 
@@ -77,6 +84,8 @@ class FCN(nn.Module):
 
 
 class cnnAE(nn.Module):
+    """Convolutional neural network autoencoder. 
+    """
     def __init__(self) -> None:
         super(cnnAE, self).__init__()       
         # Encoder layers
@@ -90,21 +99,16 @@ class cnnAE(nn.Module):
     
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        print(x.shape)
         x = self.pool(x)
-        print(x.shape)
         x = F.relu(self.conv2(x))
-        print(x.shape)
         x = self.pool(x)
-        print(x.shape)
         x = F.relu(self.t_conv1(x))
-        print(x.shape)
         x = (self.t_conv2(x))
-        print(x.shape)
-
         return x
 
 class cnnFCN(nn.Module):
+    """Convolutional neural network classifier. 
+    """
     def __init__(self) -> None:
         super(cnnFCN, self).__init__()
         # Encoder layers
@@ -116,18 +120,115 @@ class cnnFCN(nn.Module):
     
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        print(x.shape)
         x = self.pool(x)
-        print(x.shape)
         x = F.relu(self.conv2(x))
-        print(x.shape)
         x = self.pool(x)
-        print(x.shape)
         x = torch.flatten(x, start_dim=1)
-        print(x.shape)
         x = (self.linear(x))
-        print(x.shape)
         return x
+
+class AlexNetFCN(nn.Module):
+    def __init__(self, input_dim:list = [3, 224,224], num_classes: int = 10) -> None:
+        super(AlexNetFCN, self).__init__()
+        self.input_dim = input_dim
+        self.features = nn.Sequential(
+            nn.Conv2d(input_dim[0], 64, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.classifier = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(256 * 6 * 6, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, num_classes),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+
+class AlexNetAE(nn.Module):
+    def __init__(self, input_dim: list = [3, 224, 224], latent_space: int = 10) -> None:
+        super(AlexNetAE, self).__init__()
+        self.input_dim = input_dim
+        self.features = nn.Sequential(
+            nn.Conv2d(input_dim[0], 64, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.classifier = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(256 * 6 * 6, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, latent_space),
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_space, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, 3*224*224)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        x = self.decoder(x)
+        x = x.reshape(self.input_dim)
+        return x
+
+def alexnetFCN(num_classes:int=10):
+    """Transfer learning classifier. 
+
+    Args:
+        num_classes (int, optional): _description_. Defaults to 10.
+
+    Returns:
+        _type_: _description_
+    """
+    return mo.alexnet(num_classes=num_classes)
+
+class alexnetAE(nn.Module):
+    def __init__(self) -> None:
+        super(alexnetAE, self).__init__()
+        
+
+
+
 
 
 def model_helper(model:str, initial_weights_dir:str)->nn.Module:

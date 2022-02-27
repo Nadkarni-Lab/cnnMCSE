@@ -69,6 +69,16 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
 
 
 def get_aucs(models:list, dataset, num_workers:int=0):
+    """Get AUCs for a list of models. 
+
+    Args:
+        models (list): _description_
+        dataset (_type_): _description_
+        num_workers (int, optional): _description_. Defaults to 0.
+
+    Returns:
+        _type_: _description_
+    """
     loader  = torch.utils.data.DataLoader(dataset,
                                             batch_size=256,
                                             shuffle=False,
@@ -82,6 +92,18 @@ def get_aucs(models:list, dataset, num_workers:int=0):
     return aucs
 
 def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1):
+    """Select which metric to use. 
+
+    Args:
+        models (_type_): Models. 
+        metric_type (str): Metric Type. 
+        dataset (_type_, optional): Which validation dataset to use. Defaults to None.
+        loader (_type_, optional): Which dataloader to use. Defaults to None.
+        num_workers (int, optional): Number of workers. Defaults to 1.
+
+    Returns:
+        list: List of validated metrics
+    """
     if(metric_type == "AUC"):
         return get_aucs(models=models, dataset=dataset, num_workers=num_workers)
         #return get_AUC(model=model, dataset=dataset, loader=loader)
