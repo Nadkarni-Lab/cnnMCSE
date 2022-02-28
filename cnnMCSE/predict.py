@@ -1,6 +1,7 @@
 """Generate estimators and estimands for sample size estimation with convolutional neural networks. 
 """
 import gc
+from pyexpat import model
 import pandas as pd
 
 from cnnMCSE.dataloader import dataloader_helper
@@ -28,11 +29,12 @@ def predict_loop(
     start_seed:int = 42,
     shuffle:bool=False,
     num_workers:int=4,
-    zoo_model:str=None
+    zoo_models:str=None
     ):
 
     # return the training and testing datasets
-    using_pretrained = zoo_model != None
+    zoo_model_list = zoo_models.split(",")
+    using_pretrained = (zoo_models != None)
     trainset, testset = dataloader_helper(dataset, root_dir, tl_transforms=using_pretrained)
 
     # return the models.
@@ -63,48 +65,50 @@ def predict_loop(
     print(sample_sizes)
     # sample_sizes = sample_sizes[0:2]
     dfs = list()
-    for sample_size in sample_sizes:
-        df_dict = {}
-        print(sample_size)
-        estimators = get_estimators(
-            model = estimator,
-            training_data = trainset,
-            sample_size = sample_size,
-            batch_size = batch_size,
-            bootstraps = n_bootstraps,
-            start_seed = start_seed,
-            shuffle = shuffle,
-            initial_weights=initial_estimator_weights_path,
-            num_workers=num_workers, 
-            zoo_model=zoo_model
-        )
+    for zoo_model in zoo_model_list:
+        for sample_size in sample_sizes:
+            df_dict = {}
+            print(sample_size)
+            estimators = get_estimators(
+                model = estimator,
+                training_data = trainset,
+                sample_size = sample_size,
+                batch_size = batch_size,
+                bootstraps = n_bootstraps,
+                start_seed = start_seed,
+                shuffle = shuffle,
+                initial_weights=initial_estimator_weights_path,
+                num_workers=num_workers, 
+                zoo_model=zoo_model
+            )
+            
+
+            estimands = get_estimands(
+                model = estimand,
+                training_data = trainset,
+                validation_data = testset,
+                sample_size = sample_size,
+                batch_size=batch_size,
+                bootstraps=n_bootstraps,
+                start_seed=start_seed,
+                shuffle=shuffle,
+                metric_type="AUC",
+                initial_weights=initial_estimand_weights_path,
+                num_workers=num_workers,
+                zoo_model=zoo_model
+            )
+
+            df_dict['estimators'] = estimators
+            df_dict['estimands']  = estimands
+            df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
+            df_dict['sample_size'] = [sample_size for i in range(n_bootstraps)]     
+            df_dict['model'] = [f'{model}_{str(zoo_model)}' for i in range(n_bootstraps)] 
+            df = pd.DataFrame(df_dict)
+            dfs.append(df)
         
-
-        estimands = get_estimands(
-            model = estimand,
-            training_data = trainset,
-            validation_data = testset,
-            sample_size = sample_size,
-            batch_size=batch_size,
-            bootstraps=n_bootstraps,
-            start_seed=start_seed,
-            shuffle=shuffle,
-            metric_type="AUC",
-            initial_weights=initial_estimand_weights_path,
-            num_workers=num_workers,
-            zoo_model=zoo_model
-        )
-
-        df_dict['estimators'] = estimators
-        df_dict['estimands']  = estimands
-        df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
-        df_dict['sample_size'] = [sample_size for i in range(n_bootstraps)]      
-        df = pd.DataFrame(df_dict)
-        dfs.append(df)
-    
-        print(estimators)
-        print(estimands)
-        gc.collect()
+            print(estimators)
+            print(estimands)
+            gc.collect()
     
     df = pd.concat(dfs)
     df.to_csv(out_data_path, sep="\t")
