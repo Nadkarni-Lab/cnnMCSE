@@ -26,6 +26,9 @@ if __name__ == "__main__":
     
     parser.add_argument("--out_metadata_path", required=True, type=str,
                         help="Path to output metadata with MCSE estimates.")
+
+    parser.add_argument("--zoo_model", required=True, type=str,
+                        help="Name of pretrained model to use.")
     
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")

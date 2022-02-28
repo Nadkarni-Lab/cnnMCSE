@@ -14,6 +14,7 @@ from scipy.interpolate import UnivariateSpline
 
 from cnnMCSE.models import FCN, A3
 from cnnMCSE.metrics import metric_helper
+from cnnMCSE.utils.zoo import transfer_helper
 
 
 BATCH_SIZE = 4
@@ -31,7 +32,8 @@ def get_estimators(
     bootstraps:int=1,
     start_seed:int=42,
     shuffle:bool=False,
-    num_workers:int=1):
+    num_workers:int=1,
+    zoo_model:str=None):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -52,6 +54,9 @@ def get_estimators(
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device}")
 
+    if(zoo_model):
+        pretrained_model = transfer_helper(zoo_model)
+        pretrained_model = pretrained_model.to(device=device)            
     # run across all the bootstraps
     losses = list()
     for i in range(bootstraps):
@@ -73,8 +78,11 @@ def get_estimators(
                                               num_workers=num_workers,
                                               pin_memory=True)
         # Initialize current model. 
-        print("Initialize current model. ")
-        current_model = model()
+        print(f"Initialize current model. {initial_weights}")
+        if(zoo_model): 
+            current_model = model(input_size=1000)
+        else:
+            current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
@@ -108,6 +116,8 @@ def get_estimators(
             #inputs = inputs.flatten()
             inputs, labels = inputs.to(device), labels.to(device)
 
+            if(pretrained_model):
+                inputs = pretrained_model(inputs)
 
             # Zero parameter gradients
             optimizer_model.zero_grad()
@@ -144,7 +154,8 @@ def get_estimands(
     start_seed:int=42,
     shuffle:bool=False,
     metric_type:str="AUC",
-    num_workers:int=1
+    num_workers:int=1,
+    zoo_model:str=None
     ):
     """Method to generate estimands. 
 
@@ -165,6 +176,10 @@ def get_estimands(
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device}")
+
+    if(zoo_model):
+        pretrained_model = transfer_helper(zoo_model)
+        pretrained_model = pretrained_model.to(device=device) 
 
     print("Getting estimands")
     models = list()
@@ -189,7 +204,10 @@ def get_estimands(
                                               pin_memory=True)
         # Initialize current model. 
         print("Initialize current model. ")
-        current_model = model()
+        if(zoo_model): 
+            current_model = model(input_size=1000)
+        else:
+            current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
@@ -215,6 +233,10 @@ def get_estimands(
             #inputs = torch.flatten(inputs, start_dim=1)
             inputs, labels = inputs.to(device), labels.to(device)
 
+            if(pretrained_model):
+                inputs = pretrained_model(inputs)
+
+
             # Zero parameter gradients
             optimizer_model.zero_grad()
 
@@ -236,7 +258,8 @@ def get_estimands(
         models = models,
         dataset=validation_data,
         metric_type=metric_type,
-        num_workers=num_workers
+        num_workers=num_workers,
+        zoo_model=zoo_model
     )
     gc.collect()
     return metrics

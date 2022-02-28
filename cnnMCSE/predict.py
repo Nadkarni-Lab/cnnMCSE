@@ -27,11 +27,13 @@ def predict_loop(
     out_metadata_path:str=None, 
     start_seed:int = 42,
     shuffle:bool=False,
-    num_workers:int=4
+    num_workers:int=4,
+    zoo_model:str=None
     ):
 
     # return the training and testing datasets
-    trainset, testset = dataloader_helper(dataset, root_dir)
+    using_pretrained = zoo_model != None
+    trainset, testset = dataloader_helper(dataset, root_dir, tl_transforms=using_pretrained)
 
     # return the models.
     models = models.split(",") 
@@ -73,7 +75,8 @@ def predict_loop(
             start_seed = start_seed,
             shuffle = shuffle,
             initial_weights=initial_estimator_weights_path,
-            num_workers=num_workers
+            num_workers=num_workers, 
+            zoo_model=zoo_model
         )
         
 
@@ -88,7 +91,8 @@ def predict_loop(
             shuffle=shuffle,
             metric_type="AUC",
             initial_weights=initial_estimand_weights_path,
-            num_workers=num_workers
+            num_workers=num_workers,
+            zoo_model=zoo_model
         )
 
         df_dict['estimators'] = estimators

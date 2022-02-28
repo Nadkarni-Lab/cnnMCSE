@@ -253,7 +253,7 @@ def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Mo
         return FCN, initial_weights_path
     
     elif(model == "tlAE"):
-        a3 = A3(input_size=input_size)
+        initial_model = A3(input_size=input_size)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
         return A3, initial_weights_path

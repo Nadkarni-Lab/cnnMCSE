@@ -3,6 +3,14 @@
 from torchvision import models
 
 def transfer_helper(transfer_base_model:str):
+    """Method to generate pretrained model. 
+
+    Args:
+        transfer_base_model (str): String base models. 
+
+    Returns:
+        nn.Module: Model for a given zoo. 
+    """
     if(transfer_base_model == "resnet18"):
         model = models.resnet18(pretrained=True)
 

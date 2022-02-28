@@ -6,7 +6,9 @@ import torch.nn as nn
 from sklearn import metrics
 from sklearn.preprocessing import label_binarize
 
-def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10):
+from cnnMCSE.utils.zoo import transfer_helper
+
+def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10, zoo_model:str=None):
     """Get Area-Under-Curve Metric on a test dataset. 
 
     Args:
@@ -18,6 +20,11 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device}")
+
+    if(zoo_model):
+        pretrained_model = transfer_helper(zoo_model)
+        pretrained_model = nn.DataParallel(pretrained_model)
+        pretrained_model = pretrained_model.to(device=device) 
 
     current_model = model
     current_model = nn.DataParallel(current_model)
@@ -35,6 +42,9 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
         print("Running index", index)
         images, labels = data
         images, labels = images.to(device), labels.to(device)
+
+        if(pretrained_model):
+            images = pretrained_model(images)
 
         # images, labels = images.to(DEVICE), labels.to(DEVICE)
         output = current_model(images)
@@ -68,7 +78,7 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     return float(roc_auc['micro'])
 
 
-def get_aucs(models:list, dataset, num_workers:int=0):
+def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     """Get AUCs for a list of models. 
 
     Args:
@@ -86,12 +96,12 @@ def get_aucs(models:list, dataset, num_workers:int=0):
     aucs = list()
     for index, model in enumerate(models):
         print(f"Running model... {index} ")
-        auc = get_AUC(model=model, loader=loader)
+        auc = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
         aucs.append(auc)
     
     return aucs
 
-def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1):
+def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1, zoo_model:str=None):
     """Select which metric to use. 
 
     Args:
@@ -105,5 +115,5 @@ def metric_helper(models, metric_type:str, dataset=None, loader=None, num_worker
         list: List of validated metrics
     """
     if(metric_type == "AUC"):
-        return get_aucs(models=models, dataset=dataset, num_workers=num_workers)
+        return get_aucs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
         #return get_AUC(model=model, dataset=dataset, loader=loader)

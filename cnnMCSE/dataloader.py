@@ -39,10 +39,16 @@ def mnist_dataset(root_dir:str, tl_transforms:bool=False):
     
     return trainset, testset
 
-def fmnist_dataset(root_dir:str):
+def fmnist_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.FashionMNIST(root = root_dir,
         train=True,
@@ -56,10 +62,16 @@ def fmnist_dataset(root_dir:str):
 
     return trainset, testset
 
-def kmnist_dataset(root_dir:str):
+def kmnist_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.KMNIST(root=root_dir,
         train=True,
@@ -73,10 +85,17 @@ def kmnist_dataset(root_dir:str):
 
     return trainset, testset
 
-def emnist_dataset(root_dir:str):
+def emnist_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.EMNIST(root=root_dir,
         train=True,
@@ -90,10 +109,17 @@ def emnist_dataset(root_dir:str):
 
     return trainset, testset
 
-def qmnist_dataset(root_dir:str):
+def qmnist_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.QMNIST(root=root_dir,
         train=True,
@@ -107,10 +133,17 @@ def qmnist_dataset(root_dir:str):
 
     return trainset, testset
 
-def cifar10_dataset(root_dir:str):
+def cifar10_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.CIFAR10(
         root = root_dir,
@@ -128,10 +161,17 @@ def cifar10_dataset(root_dir:str):
 
     return trainset, testset
 
-def stl10_dataset(root_dir:str):
+def stl10_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     trainset = torchvision.datasets.STL10(
         root = root_dir,
@@ -147,10 +187,17 @@ def stl10_dataset(root_dir:str):
 
     return trainset, testset
 
-def fake_dataset(root_dir:str):
+def fake_dataset(root_dir:str, tl_transforms:bool=False):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
+
+    if(tl_transforms):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
+        resize = transforms.Resize((224, 224))
+        transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
     transform = transforms.Compose([
         transforms.ToTensor()
@@ -201,25 +248,25 @@ def dataloader_helper(dataset, root_dir, tl_transforms:bool=False):
         return mnist_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "FMNIST"):
-        return fmnist_dataset(root_dir)
+        return fmnist_dataset(root_dir, tl_transforms=tl_transforms)
 
     elif(dataset == "KMNIST"):
-        return kmnist_dataset(root_dir)
+        return kmnist_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "EMNIST"):
-        return emnist_dataset(root_dir)
+        return emnist_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "QMNIST"):
-        return qmnist_dataset(root_dir)
+        return qmnist_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "CIFAR10"):
-        return cifar10_dataset(root_dir)
+        return cifar10_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "STL10"):
-        return stl10_dataset(root_dir)
+        return stl10_dataset(root_dir, tl_transforms=tl_transforms)
     
     elif(dataset == "FAKE"):
-        return fake_dataset(root_dir)
+        return fake_dataset(root_dir, tl_transforms=tl_transforms)
     
     else:
         return None
