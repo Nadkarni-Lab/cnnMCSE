@@ -127,6 +127,10 @@ class cnnFCN(nn.Module):
         x = (self.linear(x))
         return x
 
+
+
+
+
 class AlexNetFCN(nn.Module):
     def __init__(self, input_dim:list = [3, 224,224], num_classes: int = 10) -> None:
         super(AlexNetFCN, self).__init__()
@@ -154,7 +158,10 @@ class AlexNetFCN(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes),
+            nn.Linear(4096, 1000),
+        )
+        self.encoder = nn.Sequential(
+            nn.Linear(1000, num_classes)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -162,6 +169,7 @@ class AlexNetFCN(nn.Module):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
+        x = self.encoder(x)
         return x
 
 
@@ -211,27 +219,7 @@ class AlexNetAE(nn.Module):
         x = x.reshape(self.input_dim)
         return x
 
-def alexnetFCN(num_classes:int=10):
-    """Transfer learning classifier. 
-
-    Args:
-        num_classes (int, optional): _description_. Defaults to 10.
-
-    Returns:
-        _type_: _description_
-    """
-    return mo.alexnet(num_classes=num_classes)
-
-class alexnetAE(nn.Module):
-    def __init__(self) -> None:
-        super(alexnetAE, self).__init__()
-        
-
-
-
-
-
-def model_helper(model:str, initial_weights_dir:str)->nn.Module:
+def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Module:
     """Method to return torch model. 
 
     Args:
@@ -258,12 +246,18 @@ def model_helper(model:str, initial_weights_dir:str)->nn.Module:
         torch.save(initial_model.state_dict(), initial_weights_path)
         return cnnAE, initial_weights_path
     
-    elif(model == "cnnFCN"):
-        initial_model = cnnFCN()
+    elif(model == "tlFCN" and input_size):
+        initial_model = FCN(input_size=input_size)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
-        return cnnFCN, initial_weights_path
+        return FCN, initial_weights_path
     
+    elif(model == "tlAE"):
+        a3 = A3(input_size=input_size)
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
+
     else:
         return None
     
