@@ -12,6 +12,7 @@ from cnnMCSE.utils.helpers import estimate_mcse
 
 def predict_loop(
     dataset:str,
+    datasets:str,
     models:str,
     root_dir:str,
     batch_size:int,
@@ -32,93 +33,164 @@ def predict_loop(
     zoo_models:str=None
     ):
 
-    # return the training and testing datasets
-    zoo_model_list = zoo_models.split(",")
-    using_pretrained = (zoo_models != None)
-    trainset, testset = dataloader_helper(dataset, root_dir, tl_transforms=using_pretrained)
+    # initialize datasets
+    dataset_list = datasets.split(",")
+    print(f"Testing datasets... {dataset_list}")
 
-    # return the models.
+    # initialize models
     models = models.split(",") 
-    print(models)
+    print(f"Testing models... {models}")
     estimator, estimand = models
-    print(estimator)
-    print(estimand)
     estimator, initial_estimator_weights_path = model_helper(model=estimator, initial_weights_dir=initial_weights_dir)
     estimand, initial_estimand_weights_path = model_helper(model=estimand, initial_weights_dir=initial_weights_dir)
 
-    print(estimator)
-    print(estimand)
+    # initialize transfer learning zoo. 
+    using_pretrained = (zoo_models != None)
+    if(using_pretrained): 
+        zoo_model_list = zoo_models.split(",")
+        print("Using transfer learning base... {zoo_model_list}")
+    else: 
+        print("No transfer learning base.")
+        zoo_model_list = [None]
 
-    estimator_x = estimator()
-    estimand_x = estimand()
-    print(estimator_x.parameters())
-    print(estimand_x.parameters())
 
-
-    sample_sizes = generate_sample_sizes(
-        max_sample_size=max_sample_size, 
-        log_scale=log_scale, 
-        min_sample_size=min_sample_size, 
-        absolute_scale=absolute_scale
-    )
-
-    print(sample_sizes)
-    # sample_sizes = sample_sizes[0:2]
     dfs = list()
-    for zoo_model in zoo_model_list:
-        for sample_size in sample_sizes:
-            df_dict = {}
-            print(sample_size)
-            estimators = get_estimators(
-                model = estimator,
-                training_data = trainset,
-                sample_size = sample_size,
-                batch_size = batch_size,
-                bootstraps = n_bootstraps,
-                start_seed = start_seed,
-                shuffle = shuffle,
-                initial_weights=initial_estimator_weights_path,
-                num_workers=num_workers, 
-                zoo_model=zoo_model
-            )
-            
+    for current_dataset in dataset_list:
+        trainset, testset = dataloader_helper(current_dataset, root_dir, tl_transforms=using_pretrained)
+        sample_sizes = generate_sample_sizes(
+            max_sample_size=max_sample_size, 
+            log_scale=log_scale, 
+            min_sample_size=min_sample_size, 
+            absolute_scale=absolute_scale
+        )
+        print(f"Running sample sizes... {sample_sizes}")
+        for zoo_model in zoo_model_list:
+            print(f"Using transfer learning model... {zoo_model}")
+            for sample_size in sample_sizes:
 
-            estimands = get_estimands(
-                model = estimand,
-                training_data = trainset,
-                validation_data = testset,
-                sample_size = sample_size,
-                batch_size=batch_size,
-                bootstraps=n_bootstraps,
-                start_seed=start_seed,
-                shuffle=shuffle,
-                metric_type="AUC",
-                initial_weights=initial_estimand_weights_path,
-                num_workers=num_workers,
-                zoo_model=zoo_model
-            )
+                #---- estimation block
+                estimators = get_estimators(
+                    model = estimator,
+                    training_data = trainset,
+                    sample_size = sample_size,
+                    batch_size = batch_size,
+                    bootstraps = n_bootstraps,
+                    start_seed = start_seed,
+                    shuffle = shuffle,
+                    initial_weights=initial_estimator_weights_path,
+                    num_workers=num_workers, 
+                    zoo_model=zoo_model
+                )
+                
 
-            df_dict['estimators'] = estimators
-            df_dict['estimands']  = estimands
-            df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
-            df_dict['sample_size'] = [sample_size for i in range(n_bootstraps)]     
-            df_dict['model'] = [f'{model}_{str(zoo_model)}' for i in range(n_bootstraps)] 
-            df = pd.DataFrame(df_dict)
-            dfs.append(df)
-        
-            print(estimators)
-            print(estimands)
-            gc.collect()
-    
+                estimands = get_estimands(
+                    model = estimand,
+                    training_data = trainset,
+                    validation_data = testset,
+                    sample_size = sample_size,
+                    batch_size=batch_size,
+                    bootstraps=n_bootstraps,
+                    start_seed=start_seed,
+                    shuffle=shuffle,
+                    metric_type="AUC",
+                    initial_weights=initial_estimand_weights_path,
+                    num_workers=num_workers,
+                    zoo_model=zoo_model
+                )
+
+                #--- Logging block. 
+                print("Logging results... ")
+                df_dict = {}
+                df_dict['estimators']   = estimators
+                df_dict['estimands']    = estimands
+                df_dict['bootstrap']    = [i+1 for i in range(n_bootstraps)]
+                df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
+                df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]
+                df_dict['estimator']    = [f'{estimator}' for i in range(n_bootstraps)] 
+                df_dict['estimand']     = [f'{estimand}' for i in range(n_bootstraps)] 
+                df_dict['dataset']      = [f'{current_dataset}' for i in range(n_bootstraps)]
+                df = pd.DataFrame(df_dict)
+                dfs.append(df)
+
+                gc.collect()
     df = pd.concat(dfs)
     df.to_csv(out_data_path, sep="\t")
-    print("Estimating MCSE")
-    estimate_mcse(df, out_metadata_path)
+    
+
+    ## Evaluating Models.
+    meta_dfs = list() 
+    for current_dataset in dataset_list:
+        for zoo_model in zoo_model_list:
+            current_df = df[
+                (df['backend'] == zoo_model) &
+                (df['dataset'] == current_dataset)
+            ]
+            meta_df              = estimate_mcse(current_df, out_metadata_path)
+            meta_df['bootstrap'] = n_bootstraps
+            meta_df['backend']   = zoo_model
+            meta_df['dataset']   = current_dataset
+            meta_df['estimator'] = estimator
+            meta_df['estimand']  = estimand
+            meta_dfs.append(meta_df)
+    
+    meta_df = pd.concat(meta_dfs)
+    meta_df.to_csv(out_metadata_path, sep='\t')
 
 
 
 
+    # print(sample_sizes)
+    # # sample_sizes = sample_sizes[0:2]
+    # dfs = list()
+    # for zoo_model in zoo_model_list:
+    #     for sample_size in sample_sizes:
+    #         df_dict = {}
+    #         print(sample_size)
+    #         estimators = get_estimators(
+    #             model = estimator,
+    #             training_data = trainset,
+    #             sample_size = sample_size,
+    #             batch_size = batch_size,
+    #             bootstraps = n_bootstraps,
+    #             start_seed = start_seed,
+    #             shuffle = shuffle,
+    #             initial_weights=initial_estimator_weights_path,
+    #             num_workers=num_workers, 
+    #             zoo_model=zoo_model
+    #         )
+            
 
+    #         estimands = get_estimands(
+    #             model = estimand,
+    #             training_data = trainset,
+    #             validation_data = testset,
+    #             sample_size = sample_size,
+    #             batch_size=batch_size,
+    #             bootstraps=n_bootstraps,
+    #             start_seed=start_seed,
+    #             shuffle=shuffle,
+    #             metric_type="AUC",
+    #             initial_weights=initial_estimand_weights_path,
+    #             num_workers=num_workers,
+    #             zoo_model=zoo_model
+    #         )
+
+    #         df_dict['estimators'] = estimators
+    #         df_dict['estimands']  = estimands
+    #         df_dict['bootstrap']  = [i+1 for i in range(n_bootstraps)]
+    #         df_dict['sample_size'] = [sample_size for i in range(n_bootstraps)]     
+    #         df_dict['model'] = [f'{model}_{str(zoo_model)}' for i in range(n_bootstraps)] 
+    #         df = pd.DataFrame(df_dict)
+    #         dfs.append(df)
+        
+    #         print(estimators)
+    #         print(estimands)
+    #         gc.collect()
+    
+    # df = pd.concat(dfs)
+    # df.to_csv(out_data_path, sep="\t")
+    #print("Estimating MCSE")
+    #estimate_mcse(df, out_metadata_path)
 
     print("Complete")
 

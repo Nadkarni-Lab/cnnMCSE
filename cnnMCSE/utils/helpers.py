@@ -109,8 +109,9 @@ def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
     out_metadata_dict['mcs_error_down'] = [estimand_down]
 
     out_metadata_df = pd.DataFrame(out_metadata_dict)
-    print(out_metadata_df)
-    out_metadata_df.to_csv(out_metadata_path, sep="\t")
+    return out_metadata_df
+    #print(out_metadata_df)
+    #out_metadata_df.to_csv(out_metadata_path, sep="\t")
 
 
 
