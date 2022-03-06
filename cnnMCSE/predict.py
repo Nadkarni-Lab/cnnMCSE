@@ -113,7 +113,7 @@ def predict_loop(
 
                 gc.collect()
     df = pd.concat(dfs)
-    df.to_csv(out_data_path, sep="\t")
+    df.to_csv(out_data_path, sep="\t", index=False)
     
 
     ## Evaluating Models.

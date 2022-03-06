@@ -73,10 +73,7 @@ def kmnist_dataset(root_dir:str, tl_transforms:bool=False):
         resize = transforms.Resize((224, 224))
         transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
 
-    trainset = torchvision.datasets.KMNIST(root=root_dir,
-        train=True,
-        download=True,
-        transform=transform)
+    trainset = torchvision.datasets.KMNIST(root=root_dir, train=True, download=True, transform=transform)
 
     testset  = torchvision.datasets.KMNIST(root=root_dir,
         train=False,
@@ -100,12 +97,14 @@ def emnist_dataset(root_dir:str, tl_transforms:bool=False):
     trainset = torchvision.datasets.EMNIST(root=root_dir,
         train=True,
         download=True,
-        transform=transform)
+        transform=transform,
+        split='mnist')
 
     testset = torchvision.datasets.EMNIST(root=root_dir,
         train=False,
         download=True,
-        transform=transform)
+        transform=transform,
+        split='mnist')
 
     return trainset, testset
 
@@ -144,6 +143,16 @@ def cifar10_dataset(root_dir:str, tl_transforms:bool=False):
         to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
         resize = transforms.Resize((224, 224))
         transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
+    else:
+        to_grayscale = transforms.Grayscale()
+        resize = transforms.Resize((28,28))
+        normalize = transforms.Normalize((0.5,), (0.5,))
+        transform = transforms.Compose([
+            resize,
+            to_grayscale,
+            transforms.ToTensor(),
+            normalize
+        ])
 
     trainset = torchvision.datasets.CIFAR10(
         root = root_dir,
@@ -161,10 +170,7 @@ def cifar10_dataset(root_dir:str, tl_transforms:bool=False):
 
     return trainset, testset
 
-def stl10_dataset(root_dir:str, tl_transforms:bool=False):
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+def stl10_dataset(root_dir:str, tl_transforms:bool=False):    
 
     if(tl_transforms):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -172,16 +178,26 @@ def stl10_dataset(root_dir:str, tl_transforms:bool=False):
         to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
         resize = transforms.Resize((224, 224))
         transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
+    else:
+        to_grayscale = transforms.Grayscale()
+        resize = transforms.Resize((28,28))
+        normalize = transforms.Normalize((0.5,), (0.5,))
+        transform = transforms.Compose([
+            resize,
+            to_grayscale,
+            transforms.ToTensor(),
+            normalize
+        ])
 
     trainset = torchvision.datasets.STL10(
         root = root_dir,
-        train=True,
+        split='train',
         download=True,
         transform=transform)
 
     testset = torchvision.datasets.STL10(
         root=root_dir,
-        train=False,
+        split='test',
         download=True,
         transform=transform)
 
@@ -198,26 +214,19 @@ def fake_dataset(root_dir:str, tl_transforms:bool=False):
         to_rgb = transforms.Lambda(lambda image: image.convert('RGB'))
         resize = transforms.Resize((224, 224))
         transform = transforms.Compose([resize, to_rgb, transforms.ToTensor(), normalize])
+    else:
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
 
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
-
-    trainset = torchvision.datasets.FakeData(
-        root = root_dir,
-        train=True,
-        download=True,
+    dataset = torchvision.datasets.FakeData(
         transform=transform,
-        size=60000,
-        image_size=(1, 28, 28))
-
-    testset = torchvision.datasets.FakeData(
-        root=root_dir,
-        train=False,
-        download=True,
-        transform=transform,
-        size=10000,
-        image_size=(1, 28, 28))
+        size=70000,
+        image_size=(1, 28, 28),
+        num_classes=10
+    )
+    
+    trainset, testset = random_split(dataset, [60000, 10000])
 
     return trainset, testset
 
