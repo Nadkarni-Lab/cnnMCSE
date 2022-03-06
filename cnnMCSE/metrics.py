@@ -18,13 +18,18 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     Returns:
         float: AUC metric. 
     """
+
+    # Using device. 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device}")
 
+    # Using PreTrained Model. 
     if(zoo_model):
         pretrained_model = transfer_helper(zoo_model)
         pretrained_model = nn.DataParallel(pretrained_model)
         pretrained_model = pretrained_model.to(device=device) 
+    else:
+        pretrained_model = None
 
     current_model = model
     current_model = nn.DataParallel(current_model)

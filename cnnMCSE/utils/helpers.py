@@ -65,6 +65,9 @@ def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
     """
 
     # generate list of sample sizes. 
+    print("Importing dataframe.")
+
+
     sample_sizes = list(df['sample_size'].unique())
     print(f"Generating sample sizes, {sample_sizes}")
 
@@ -102,7 +105,7 @@ def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
     out_metadata_dict['mcse_error_down'] = [error_down]
     out_metadata_dict['mcse_power'] = [power_estimator]
     out_metadata_dict['mcse_power_up'] = [power_up]
-    out_metadata_dict['mcse_power_down'] = [power_down]
+    out_metadata_dict['mcse_power_down'] = [power_down[0]]
 
     out_metadata_dict['mcs'] = [peak_estimand]
     out_metadata_dict['mcs_error_up'] = [estimand_up]

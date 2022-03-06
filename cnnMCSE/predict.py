@@ -11,7 +11,6 @@ from cnnMCSE.mcse import get_estimators, get_estimands
 from cnnMCSE.utils.helpers import estimate_mcse
 
 def predict_loop(
-    dataset:str,
     datasets:str,
     models:str,
     root_dir:str,
@@ -122,8 +121,8 @@ def predict_loop(
     for current_dataset in dataset_list:
         for zoo_model in zoo_model_list:
             current_df = df[
-                (df['backend'] == zoo_model) &
-                (df['dataset'] == current_dataset)
+                (df['backend'] == str(zoo_model)) &
+                (df['dataset'] == str(current_dataset))
             ]
             meta_df              = estimate_mcse(current_df, out_metadata_path)
             meta_df['bootstrap'] = n_bootstraps
@@ -134,7 +133,7 @@ def predict_loop(
             meta_dfs.append(meta_df)
     
     meta_df = pd.concat(meta_dfs)
-    meta_df.to_csv(out_metadata_path, sep='\t')
+    meta_df.to_csv(out_metadata_path, sep='\t', index=False)
 
 
 
