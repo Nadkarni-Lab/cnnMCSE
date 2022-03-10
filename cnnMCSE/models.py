@@ -246,6 +246,12 @@ def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Mo
         torch.save(initial_model.state_dict(), initial_weights_path)
         return cnnAE, initial_weights_path
     
+    elif(model == "cnnFCN"):
+        initial_model = cnnFCN()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return cnnFCN, initial_weights_path
+    
     elif(model == "tlFCN" and input_size):
         initial_model = FCN(input_size=input_size)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')

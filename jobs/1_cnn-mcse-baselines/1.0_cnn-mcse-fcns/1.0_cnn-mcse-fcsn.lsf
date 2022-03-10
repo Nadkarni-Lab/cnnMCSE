@@ -18,10 +18,10 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns
 
-python cnn-mcse-fcns.py --datasets MNIST,FMNIST \
+python cnn-mcse-fcns.py --datasets MNIST,FMNIST,KMNIST,QMNIST,EMNIST,CIFAR10,STL10,FAKE \
     --models A3,FCN \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
-    --n_bootstraps 1 --shuffle --batch_size 1 --num_workers 0 --max_sample_size 1000 \
+    --n_bootstraps 1 --shuffle --batch_size 1 --num_workers 0 --max_sample_size 5000 \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/weights \
     --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/output/fcn_data.tsv \
     --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/output/fcn_metadata.tsv 
