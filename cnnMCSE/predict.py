@@ -1,6 +1,7 @@
 """Generate estimators and estimands for sample size estimation with convolutional neural networks. 
 """
 import gc
+import torch
 from pyexpat import model
 import pandas as pd
 
@@ -48,6 +49,7 @@ def predict_loop(
     if(using_pretrained): 
         zoo_model_list = zoo_models.split(",")
         print("Using transfer learning base... {zoo_model_list}")
+        torch.hub.set_dir(initial_weights_dir)
     else: 
         print("No transfer learning base.")
         zoo_model_list = [None]
