@@ -33,6 +33,9 @@ if __name__ == "__main__":
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")
     
+    parser.add_argument("--metric_type", required=False, type=int, default='AUC'
+                        help="Metric Type to evaluate on.")
+
     parser.add_argument("--batch_size", required=False, type=int, default=4,
                         help="Number of batches.")
     

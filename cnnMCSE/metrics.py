@@ -6,6 +6,8 @@ import torch.nn as nn
 from sklearn import metrics
 from sklearn.preprocessing import label_binarize
 
+import pandas as pd
+
 from cnnMCSE.utils.zoo import transfer_helper
 
 def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10, zoo_model:str=None):
@@ -83,6 +85,96 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     return float(roc_auc['micro'])
 
 
+def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10, zoo_model:str=None):
+    """Get Area-Under-Curve Metric on a test dataset. 
+
+    Args:
+        model (_type_): Model to validate. 
+        dataset (_type_): Dataset to use. 
+
+    Returns:
+        float: AUC metric. 
+    """
+
+    # Using device. 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
+
+    # Using PreTrained Model. 
+    if(zoo_model):
+        pretrained_model = transfer_helper(zoo_model)
+        pretrained_model = nn.DataParallel(pretrained_model)
+        pretrained_model = pretrained_model.to(device=device) 
+    else:
+        pretrained_model = None
+
+    current_model = model
+    current_model = nn.DataParallel(current_model)
+    current_model.to(device)
+    current_model.eval()
+
+    model_predictions = []
+    model_labels      = []
+
+    print("Generating predictions")
+    print(len(loader))
+    #with torch.no_grad():
+    print("Broken here....")
+    for index, data in enumerate(loader):
+        print("Running index", index)
+        images, labels = data
+        images, labels = images.to(device), labels.to(device)
+
+        if(pretrained_model):
+            images = pretrained_model(images)
+
+        # images, labels = images.to(DEVICE), labels.to(DEVICE)
+        output = current_model(images)
+        _, predicted = torch.max(output.data, 1)
+        model_predictions = model_predictions + predicted.tolist()
+        model_labels = model_labels + labels.tolist()
+            # model_predictions.append(predicted.tolist())
+            #print('Predictions', predicted.shape)
+        # for prediction in predicted:
+        #     #print('Predicted', prediction.shape)
+        #     model_predictions.append(prediction.tolist())
+        # for label in labels:
+        #     #print('Labels', label.shape)
+        #     model_labels.append(label.tolist())
+
+    roc_dicts = list()
+    roc_dict = {}
+    unique_labels = list(set(model_labels)
+
+
+    print('Model Labels', len(model_labels))
+    print('Model Predictions',len(model_predictions))
+
+    for unique_label in unique_labels:
+        roc_dict = {}
+        current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
+        current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
+        current_label_predictions = [model_predictions[i] for i in current_label_indices]
+        fpr = dict()
+        tpr = dict()
+        roc_auc = dict()
+        print("Calculating AUC.")
+        class_list = [i for i in range(num_classes)]
+        labels_binarized = label_binarize(current_label_indices, classes=class_list)
+        predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
+
+        print("Getting ROC curve. ")
+        fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
+        roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
+        roc_dict['label'] = unique_label
+        roc_dict['AUC'] = float(roc_auc['micro'])
+        roc_dicts.append(roc_dict)
+    
+    roc_df = pd.concat(roc_dicts)
+    #print(roc_auc['micro'])
+    return roc_df
+
+
 def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     """Get AUCs for a list of models. 
 
@@ -106,6 +198,32 @@ def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     
     return aucs
 
+def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
+    """Get AUCs for a list of models. 
+
+    Args:
+        models (list): _description_
+        dataset (_type_): _description_
+        num_workers (int, optional): _description_. Defaults to 0.
+
+    Returns:
+        _type_: _description_
+    """
+    loader  = torch.utils.data.DataLoader(dataset,
+                                            batch_size=256,
+                                            shuffle=False,
+                                            num_workers=num_workers)
+    auc_dfs = list()
+    for index, model in enumerate(models):
+        print(f"Running model... {index} ")
+        auc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
+        auc_df['model'] = index
+        auc_dfs.append(auc_df)
+    
+    auc_df = pd.concat(auc_dfs)
+    
+    return auc_df
+
 def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1, zoo_model:str=None):
     """Select which metric to use. 
 
@@ -121,4 +239,7 @@ def metric_helper(models, metric_type:str, dataset=None, loader=None, num_worker
     """
     if(metric_type == "AUC"):
         return get_aucs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
+    
+    if(metric_type == "sAUC"):
+        return get_sAUCs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
         #return get_AUC(model=model, dataset=dataset, loader=loader)
