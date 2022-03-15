@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_bootstraps", required=True, type=int,
                         help="Number of bootstraps to conduct.")
     
-    parser.add_argument("--metric_type", required=False, type=int, default='AUC'
+    parser.add_argument("--metric_type", required=False, type=str, default='AUC',
                         help="Metric Type to evaluate on.")
 
     parser.add_argument("--batch_size", required=False, type=int, default=4,
@@ -62,3 +62,7 @@ if __name__ == "__main__":
 
     config_kwargs = parser.parse_args()
     main(**vars(config_kwargs))
+
+
+def initial_command():
+    return """python cnn-smcse-sauc.py --datasets MNIST --metric_type sAUC --models A3,FCN --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500  --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/weights --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/data.tsv --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/fcn_metadata.tsv"""

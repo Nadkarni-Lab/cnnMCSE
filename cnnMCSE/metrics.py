@@ -144,14 +144,15 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
 
     roc_dicts = list()
     roc_dict = {}
-    unique_labels = list(set(model_labels)
+    unique_labels = list(set(model_labels))
 
 
     print('Model Labels', len(model_labels))
     print('Model Predictions',len(model_predictions))
 
+    roc_dict = {}
     for unique_label in unique_labels:
-        roc_dict = {}
+        print("Running unique label", unique_label)
         current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
         current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
         current_label_predictions = [model_predictions[i] for i in current_label_indices]
@@ -166,11 +167,11 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
         print("Getting ROC curve. ")
         fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
         roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
-        roc_dict['label'] = unique_label
-        roc_dict['AUC'] = float(roc_auc['micro'])
-        roc_dicts.append(roc_dict)
+        print('Current AUC', roc_auc['micro'])
+        # roc_dict['label'] = unique_label
+        roc_dict[f'estimands__{unique_label}'] = [float(roc_auc['micro'])]
     
-    roc_df = pd.concat(roc_dicts)
+    roc_df = pd.DataFrame(roc_dict)
     #print(roc_auc['micro'])
     return roc_df
 

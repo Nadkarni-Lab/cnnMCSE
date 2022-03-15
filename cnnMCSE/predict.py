@@ -9,7 +9,7 @@ from cnnMCSE.dataloader import dataloader_helper
 from cnnMCSE.models import model_helper
 from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inflection_point
 from cnnMCSE.mcse import get_estimators, get_estimands
-from cnnMCSE.utils.helpers import estimate_mcse
+from cnnMCSE.utils.helpers import estimate_mcse, estimate_smcse
 
 def predict_loop(
     datasets:str,
@@ -104,7 +104,10 @@ def predict_loop(
                 print("Logging results... ")
                 df_dict = {}
                 df_dict['estimators']   = estimators
-                df_dict['estimands']    = estimands
+
+                if(metric_type == "AUC"):
+                    df_dict['estimands']    = estimands
+
                 df_dict['bootstrap']    = [i+1 for i in range(n_bootstraps)]
                 df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
                 df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]
@@ -112,7 +115,12 @@ def predict_loop(
                 df_dict['estimand']     = [f'{estimand}' for i in range(n_bootstraps)] 
                 df_dict['dataset']      = [f'{current_dataset}' for i in range(n_bootstraps)]
                 df = pd.DataFrame(df_dict)
-                dfs.append(df)
+                print(df)
+                print(estimands)
+                if(metric_type == "sAUC"):
+                    df_merged = pd.concat([df, estimands], axis=1)
+
+                dfs.append(df_merged)
 
                 gc.collect()
     df = pd.concat(dfs)
@@ -127,7 +135,10 @@ def predict_loop(
                 (df['backend'] == str(zoo_model)) &
                 (df['dataset'] == str(current_dataset))
             ]
-            meta_df              = estimate_mcse(current_df, out_metadata_path)
+            if(metric_type == "AUC"):
+                meta_df              = estimate_mcse(current_df)
+            else:
+                meta_df              = estimate_smcse(current_df)
             meta_df['bootstrap'] = n_bootstraps
             meta_df['backend']   = zoo_model
             meta_df['dataset']   = current_dataset

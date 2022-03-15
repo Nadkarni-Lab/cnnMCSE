@@ -5,7 +5,7 @@
 #BSUB -W 48:00 
 #BSUB -R rusage[mem=16000]
 #BSUB -R span[ptile=4]
-#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/logs/%J.stdout 
+#BSUB -oo /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/logs/%J.stdout 
 #BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/logs/%J.stderr 
 #BSUB -L /bin/bash 
 
@@ -18,11 +18,11 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns
 
-python cnn-mcse-fcns.py --datasets MNIST,FMNIST,KMNIST,QMNIST,EMNIST,CIFAR10,STL10,FAKE \
+python cnn-mcse-fcns.py --datasets MNIST \
+    --metric_type sAUC \
     --models A3,FCN \
-    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
-    --n_bootstraps 1 --shuffle --batch_size 1 --num_workers 0 --max_sample_size 5000 \
-    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/weights \
-    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/output/50_fcn_data.tsv \
-    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns/output/50_fcn_metadata.tsv \
-    --metric_type sAUC
+    --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --num_workers 0 --max_sample_size 500 \
+    --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/weights \
+    --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/data.tsv \
+    --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/50_fcn_metadata.tsv

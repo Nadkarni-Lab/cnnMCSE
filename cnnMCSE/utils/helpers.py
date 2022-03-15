@@ -56,7 +56,39 @@ def get_power(spl, value:float):
     """
 
     return spl(value)
-def estimate_mcse(df:pd.DataFrame, out_metadata_path:str):
+
+def estimate_smcse(df:pd.DataFrame):
+    """Method to estimate stratified minimum convergence sample estimations. 
+
+    Args:
+        df (pd.DataFrame): _description_
+    """
+
+    # get column names
+    col_names = list(df.columns)
+
+    metadata_dfs = list()
+    # filter to estimands
+    estimand_cols = [col_name for col_name in col_names if ('estimands__' in col_name)]
+    other_cols = [col_name for col_name in col_names if ('estimands__' not in col_name)]
+    for estimand_col in estimand_cols:
+        print("Running estimand ...", estimand_col)
+        class_name = estimand_col.split("__")[-1]
+        df_estimand = df[other_cols + [estimand_col]]
+        df_estimand['estimands'] = df[estimand_col]
+        out_estimand = estimate_mcse(df_estimand)
+        out_estimand.columns = [col_df + '__' + class_name for col_df in out_estimand.columns]
+        print(out_estimand)
+        metadata_dfs.append(out_estimand)
+    
+    print(len(metadata_dfs))
+    metadata_df = pd.concat(metadata_dfs, axis=1)
+    return metadata_df
+
+
+
+
+def estimate_mcse(df:pd.DataFrame):
     """Method to estimate minimum convergence sample from pandas dataframe. 
 
     Args:
