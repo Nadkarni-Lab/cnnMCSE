@@ -69,20 +69,27 @@ def estimate_smcse(df:pd.DataFrame):
 
     metadata_dfs = list()
     # filter to estimands
-    estimand_cols = [col_name for col_name in col_names if ('estimands__' in col_name)]
-    other_cols = [col_name for col_name in col_names if ('estimands__' not in col_name)]
-    for estimand_col in estimand_cols:
+
+    estimands_labels = list(df['label'].unique())
+    #estimand_cols = [col_name for col_name in col_names if ('estimands__' in col_name)]
+    #other_cols = [col_name for col_name in col_names if ('estimands__' not in col_name)]
+    for estimand_col in estimands_labels:
         print("Running estimand ...", estimand_col)
-        class_name = estimand_col.split("__")[-1]
-        df_estimand = df[other_cols + [estimand_col]]
-        df_estimand['estimands'] = df[estimand_col]
+        #class_name = estimand_col.split("__")[-1]
+        #df_estimand = df[other_cols + [estimand_col]]
+        #df_estimand['estimands'] = df[estimand_col]
+
+        df_estimand = df[
+            df['label'] == estimand_col
+        ]
         out_estimand = estimate_mcse(df_estimand)
-        out_estimand.columns = [col_df + '__' + class_name for col_df in out_estimand.columns]
+        out_estimand['label'] = estimand_col
+        #out_estimand.columns = [col_df + '__' + str(estimand_col) for col_df in out_estimand.columns]
         print(out_estimand)
         metadata_dfs.append(out_estimand)
     
     print(len(metadata_dfs))
-    metadata_df = pd.concat(metadata_dfs, axis=1)
+    metadata_df = pd.concat(metadata_dfs, axis=0)
     return metadata_df
 
 

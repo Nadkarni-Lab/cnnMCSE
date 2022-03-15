@@ -107,7 +107,6 @@ def predict_loop(
 
                 if(metric_type == "AUC"):
                     df_dict['estimands']    = estimands
-
                 df_dict['bootstrap']    = [i+1 for i in range(n_bootstraps)]
                 df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
                 df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]

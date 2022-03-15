@@ -150,6 +150,7 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     print('Model Labels', len(model_labels))
     print('Model Predictions',len(model_predictions))
 
+    roc_dfs = list()
     roc_dict = {}
     for unique_label in unique_labels:
         print("Running unique label", unique_label)
@@ -167,11 +168,14 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
         print("Getting ROC curve. ")
         fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
         roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
+        
         print('Current AUC', roc_auc['micro'])
-        # roc_dict['label'] = unique_label
-        roc_dict[f'estimands__{unique_label}'] = [float(roc_auc['micro'])]
+        roc_dict['label'] = [unique_label]
+        roc_dict[f'estimands'] = [float(roc_auc['micro'])]
+        roc_df = pd.DataFrame(roc_dict)
+        roc_dfs.append(roc_df)
     
-    roc_df = pd.DataFrame(roc_dict)
+    roc_df = pd.concat(roc_dfs)
     #print(roc_auc['micro'])
     return roc_df
 
