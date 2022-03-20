@@ -156,6 +156,7 @@ def get_estimators(
         frequency_df = metric_helper(models=None, metric_type="frequencies", datasets=train_subsets, num_workers=0)
 
         merged_df = pd.concat([loss_df, frequency_df], axis=1)
+        merged_df['sample_size'] = sample_size
         return merged_df
     
     else:

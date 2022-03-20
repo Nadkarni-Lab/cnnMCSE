@@ -272,7 +272,7 @@ def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
                                             num_workers=num_workers)
         print(f"Running model... {index} ")
         frq_df = get_frequency(loader=loader)
-        frq_df['dataset'] = index
+        frq_df['bootstrap'] = index
         frq_dfs.append(frq_df)
     frq_df = pd.concat(frq_dfs)
     

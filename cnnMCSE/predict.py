@@ -110,7 +110,7 @@ def predict_loop(
 
                 if(metric_type == "AUC"):
                     df_dict['estimands']    = estimands
-                df_dict['bootstrap']    = [i+1 for i in range(n_bootstraps)]
+                df_dict['bootstrap']    = [i for i in range(n_bootstraps)]
                 df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
                 df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]
                 df_dict['estimator']    = [f'{estimator}' for i in range(n_bootstraps)] 
@@ -125,8 +125,8 @@ def predict_loop(
                         outputs = estimators.merge(estimands, on='label')
                         print(outputs)
                         # outputs = pd.concat([estimands, estimators], axis=1)
-
-                        df_merged = pd.concat([df, outputs], axis=1)
+                        df_merged = outputs.merge(df, on=['bootstrap', 'sample_size'])
+                        # df_merged = pd.concat([df, outputs], axis=1)
                     else:
                         df_merged = pd.concat([df, estimators], axis=1)
 
