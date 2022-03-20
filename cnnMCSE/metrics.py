@@ -229,7 +229,57 @@ def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     
     return auc_df
 
-def metric_helper(models, metric_type:str, dataset=None, loader=None, num_workers:int=1, zoo_model:str=None):
+def get_frequency(loader):
+
+    all_labels = list()
+    for _, data in enumerate(loader):
+        _, labels = data
+        all_labels = all_labels + labels.tolist()
+
+    unique_labels = list(set(all_labels))
+
+    label_dfs = list()
+    for unique_label in unique_labels:
+        label_dict = {}
+        num_labels = sum([(label == unique_label) for label in all_labels])
+        label_dict['label'] = [unique_label]
+        label_dict['frequency'] = [num_labels / len(all_labels)]
+        label_df = pd.DataFrame(label_dict)
+        label_dfs.append(label_df)
+    
+    label_df = pd.concat(label_dfs)
+    return label_df
+    
+
+
+def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
+    """Method to get frequencies from a given list of datasets. 
+
+    Args:
+        datasets (_type_): List of datasets. 
+        num_workers (int, optional): _description_. Defaults to 0.
+        zoo_model (str, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    frq_dfs = list()
+    for index, dataset in enumerate(datasets):
+        loader  = torch.utils.data.DataLoader(dataset,
+                                            batch_size=256,
+                                            shuffle=False,
+                                            num_workers=num_workers)
+        print(f"Running model... {index} ")
+        frq_df = get_frequency(loader=loader)
+        frq_df['dataset'] = index
+        frq_dfs.append(frq_df)
+    frq_df = pd.concat(frq_dfs)
+    
+    return frq_df
+
+
+def metric_helper(models, metric_type:str, datasets=None, dataset=None, loader=None, num_workers:int=1, zoo_model:str=None):
     """Select which metric to use. 
 
     Args:
@@ -247,4 +297,7 @@ def metric_helper(models, metric_type:str, dataset=None, loader=None, num_worker
     
     if(metric_type == "sAUC"):
         return get_sAUCs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
+    
+    if(metric_type == "frequencies"):
+        return get_frequencies(datasets=datasets, num_workers=num_workers, zoo_model=zoo_model)
         #return get_AUC(model=model, dataset=dataset, loader=loader)

@@ -31,7 +31,8 @@ def predict_loop(
     shuffle:bool=False,
     num_workers:int=4,
     zoo_models:str=None,
-    metric_type:str="AUC"
+    metric_type:str="AUC",
+    frequency:bool=False
     ):
 
     # initialize datasets
@@ -81,7 +82,8 @@ def predict_loop(
                     shuffle = shuffle,
                     initial_weights=initial_estimator_weights_path,
                     num_workers=num_workers, 
-                    zoo_model=zoo_model
+                    zoo_model=zoo_model,
+                    frequency=frequency
                 )
                 
 
@@ -103,7 +105,8 @@ def predict_loop(
                 #--- Logging block. 
                 print("Logging results... ")
                 df_dict = {}
-                df_dict['estimators']   = estimators
+                if(frequency == False):
+                    df_dict['estimators']   = estimators
 
                 if(metric_type == "AUC"):
                     df_dict['estimands']    = estimands
@@ -116,8 +119,16 @@ def predict_loop(
                 df = pd.DataFrame(df_dict)
                 print(df)
                 print(estimands)
+                print(estimators)
                 if(metric_type == "sAUC"):
-                    df_merged = pd.concat([df, estimands], axis=1)
+                    if(frequency):
+                        outputs = estimators.merge(estimands, on='label')
+                        print(outputs)
+                        # outputs = pd.concat([estimands, estimators], axis=1)
+
+                        df_merged = pd.concat([df, outputs], axis=1)
+                    else:
+                        df_merged = pd.concat([df, estimators], axis=1)
 
                 dfs.append(df_merged)
 

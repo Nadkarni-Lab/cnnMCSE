@@ -143,6 +143,10 @@ def get_estimators(
         losses.append(float(loss))
 
     gc.collect()
+
+    
+
+
     return losses
 
 

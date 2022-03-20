@@ -3,6 +3,7 @@
 import os
 import gc
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -33,7 +34,8 @@ def get_estimators(
     start_seed:int=42,
     shuffle:bool=False,
     num_workers:int=1,
-    zoo_model:str=None):
+    zoo_model:str=None,
+    frequency:bool=False):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -45,6 +47,7 @@ def get_estimators(
         start_seed (int, optional): Seed. Defaults to 42.
         shuffle (bool, optional): Shuffle the dataset. Defaults to False.
         num_workers (int, optional): Number of workers. Defaults to 1.
+        frequency (bool, optional): Whether to calculate frequencies or not. 
 
     Returns:
         list: List of losses. 
@@ -62,6 +65,7 @@ def get_estimators(
         pretrained_model = None         
     # run across all the bootstraps
     losses = list()
+    train_subsets = list()
     for i in range(bootstraps):
         print("Running loop ", i)
 
@@ -72,7 +76,9 @@ def get_estimators(
         # generate a unique training subset.
         print("Creating training subset")
         train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
+        train_subsets.append(train_subset)
         
+
         # Create a training dataloader. 
         print("Create a training dataloader. ")
         trainloader = torch.utils.data.DataLoader(train_subset,
@@ -142,8 +148,21 @@ def get_estimators(
         loss = running_loss / sample_size
         losses.append(float(loss))
 
+    if(frequency == True):
+        loss_dict = {
+            'estimators': losses
+        }
+        loss_df = pd.DataFrame(loss_dict)
+        frequency_df = metric_helper(models=None, metric_type="frequencies", datasets=train_subsets, num_workers=0)
+
+        merged_df = pd.concat([loss_df, frequency_df], axis=1)
+        return merged_df
+    
+    else:
+        return losses
+
     gc.collect()
-    return losses
+    return merged_df
 
 
 def get_estimands(
