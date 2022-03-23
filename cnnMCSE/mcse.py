@@ -192,7 +192,7 @@ def get_estimators(
         merged_df = pd.concat([loss_df, frequency_df], axis=1)
         
         if(stratified):
-            s_mcse_df = pd.DataFrame.from_dict(s_losses, orient='index', columns = ['s_estimator'])
+            s_mcse_df = pd.DataFrame.from_dict(s_losses, orient='index', columns = ['s_estimators'])
             s_mcse_df = s_mcse_df.reset_index()
             s_mcse_df['label']  = s_mcse_df['index']
             print(s_mcse_df)

@@ -173,7 +173,7 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
         
         print('Current AUC', roc_auc['micro'])
         roc_dict['label'] = [unique_label]
-        roc_dict[f'estimands'] = [float(roc_auc['micro'])]
+        roc_dict[f's_estimands'] = [float(roc_auc['micro'])]
         roc_df = pd.DataFrame(roc_dict)
         roc_dfs.append(roc_df)
     
@@ -223,16 +223,17 @@ def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
                                             batch_size=256,
                                             shuffle=False,
                                             num_workers=num_workers)
-    auc_dfs = list()
+    sauc_dfs = list()
     for index, model in enumerate(models):
         print(f"Running model... {index} ")
-        auc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
-        auc_df['model'] = index
-        auc_dfs.append(auc_df)
+        sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
+        sauc_df['estimands'] = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
+        sauc_df['model'] = index
+        sauc_dfs.append(sauc_df)
     
-    auc_df = pd.concat(auc_dfs)
+    sauc_df = pd.concat(sauc_dfs)
     
-    return auc_df
+    return sauc_df
 
 def get_frequency(loader):
 

@@ -67,7 +67,9 @@ def estimate_smcse(df:pd.DataFrame):
     # get column names
     col_names = list(df.columns)
 
-    metadata_dfs = list()
+    out_estimand = estimate_mcse(df)
+    out_estimand['label'] = 'all'
+    metadata_dfs = [out_estimand]
     # filter to estimands
 
     estimands_labels = list(df['label'].unique())
@@ -82,12 +84,16 @@ def estimate_smcse(df:pd.DataFrame):
         df_estimand = df[
             df['label'] == estimand_col
         ]
+        df_estimand['estimators'] = df_estimand['s_estimators']
+        df_estimand['estimands'] = df_estimand['s_estimands']
+
         out_estimand = estimate_mcse(df_estimand)
         out_estimand['label'] = estimand_col
         #out_estimand.columns = [col_df + '__' + str(estimand_col) for col_df in out_estimand.columns]
         print(out_estimand)
         metadata_dfs.append(out_estimand)
     
+
     print(len(metadata_dfs))
     metadata_df = pd.concat(metadata_dfs, axis=0)
     return metadata_df
