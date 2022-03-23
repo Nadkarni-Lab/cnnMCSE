@@ -2,6 +2,7 @@
 """
 import os
 import gc
+from random import sample
 import numpy as np
 import pandas as pd
 
@@ -35,7 +36,8 @@ def get_estimators(
     shuffle:bool=False,
     num_workers:int=1,
     zoo_model:str=None,
-    frequency:bool=False):
+    frequency:bool=False,
+    stratified:bool=False):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -66,6 +68,8 @@ def get_estimators(
     # run across all the bootstraps
     losses = list()
     train_subsets = list()
+    s_losses = {}
+
     for i in range(bootstraps):
         print("Running loop ", i)
 
@@ -105,7 +109,12 @@ def get_estimators(
 
         # Generate mean-squared error loss criterion
         print("Generate mean-squared error loss criterion.")
+        if(stratified):
+            s_criterion = nn.MSELoss(reduction='none')
+            
         criterion = nn.MSELoss()
+        #else:
+        #   
 
         # Optimize model with stochastic gradient descent. 
         print("Optimize model with stochastic gradient descent. ")
@@ -113,6 +122,7 @@ def get_estimators(
 
         # Set up training loop
         running_loss = 0.0
+        s_running_loss = dict()
         
         # iterate over training subset. 
         print("Running dataset ")
@@ -139,14 +149,38 @@ def get_estimators(
             inputs = inputs.reshape(outputs.shape)
             print('Input shape', inputs.shape)
             loss = criterion(outputs, inputs)
+
+            if(stratified):
+                print("Running stratified loss...")
+                s_loss = s_criterion(outputs, inputs)
+                labels = labels.tolist()
+                s_loss_dict = metric_helper(metric_type="sloss", s_loss=s_loss, labels=labels, models=None)
+
             loss.backward()
             optimizer_model.step()
 
             running_loss += loss.item()
 
+            print("Adding losses to running losses...")
+            for key, value in s_loss_dict.items():
+                if(key in s_running_loss):
+                    s_running_loss[key] += s_loss_dict[key][0]
+                else:
+                    s_running_loss[key] = s_loss_dict[key][0]
+
+
         # Add loss
         loss = running_loss / sample_size
         losses.append(float(loss))
+
+        if(stratified):
+            for key, value in s_running_loss.items():
+                s_loss = value / sample_size
+                if(key in s_losses):
+                    s_losses[key].append(s_loss)
+                else:
+                    s_losses[key] = [s_loss]
+
 
     if(frequency == True):
         loss_dict = {
@@ -156,6 +190,15 @@ def get_estimators(
         frequency_df = metric_helper(models=None, metric_type="frequencies", datasets=train_subsets, num_workers=0)
 
         merged_df = pd.concat([loss_df, frequency_df], axis=1)
+        
+        if(stratified):
+            s_mcse_df = pd.DataFrame.from_dict(s_losses, orient='index', columns = ['s_estimator'])
+            s_mcse_df = s_mcse_df.reset_index()
+            s_mcse_df['label']  = s_mcse_df['index']
+            print(s_mcse_df)
+            print(merged_df)
+            merged_df = merged_df.merge(s_mcse_df, on='label')
+
         merged_df['sample_size'] = sample_size
         return merged_df
     

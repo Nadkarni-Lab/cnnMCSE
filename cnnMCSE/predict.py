@@ -32,7 +32,8 @@ def predict_loop(
     num_workers:int=4,
     zoo_models:str=None,
     metric_type:str="AUC",
-    frequency:bool=False
+    frequency:bool=False,
+    stratified:bool=False
     ):
 
     # initialize datasets
@@ -83,7 +84,8 @@ def predict_loop(
                     initial_weights=initial_estimator_weights_path,
                     num_workers=num_workers, 
                     zoo_model=zoo_model,
-                    frequency=frequency
+                    frequency=frequency,
+                    stratified=stratified
                 )
                 
 

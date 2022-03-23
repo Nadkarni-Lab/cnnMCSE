@@ -3,10 +3,12 @@
 import torch
 import torch.nn as nn
 
+import numpy as np
+import pandas as pd
+
 from sklearn import metrics
 from sklearn.preprocessing import label_binarize
 
-import pandas as pd
 
 from cnnMCSE.utils.zoo import transfer_helper
 
@@ -180,6 +182,9 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     return roc_df
 
 
+
+
+
 def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     """Get AUCs for a list of models. 
 
@@ -278,8 +283,33 @@ def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
     
     return frq_df
 
+def get_sloss(labels:list, s_loss):
+    s_loss_dict = {}
+    with torch.no_grad():
+        sample_mses = torch.mean(s_loss, dim=[i+1 for i in range(len(s_loss.shape)-1)])
+        s_loss_dict = {}
+        for label, sample_mse in zip(labels, sample_mses):
+            if(label in s_loss_dict):
+                s_loss_dict[label].append(sample_mse.item())
+            else:
+                s_loss_dict[label] = [sample_mse.item()]
+        for key, value in s_loss_dict.items():
+            s_loss_dict[key] = [np.mean(value)]
+    
+    return s_loss_dict
 
-def metric_helper(models, metric_type:str, datasets=None, dataset=None, loader=None, num_workers:int=1, zoo_model:str=None):
+
+
+
+def metric_helper(models, 
+    metric_type:str, 
+    datasets=None, 
+    dataset=None, 
+    loader=None, 
+    num_workers:int=1, 
+    zoo_model:str=None, 
+    labels=None,
+    s_loss=None):
     """Select which metric to use. 
 
     Args:
@@ -300,4 +330,7 @@ def metric_helper(models, metric_type:str, datasets=None, dataset=None, loader=N
     
     if(metric_type == "frequencies"):
         return get_frequencies(datasets=datasets, num_workers=num_workers, zoo_model=zoo_model)
+    
+    if(metric_type == "sloss"):
+        return get_sloss(labels=labels, s_loss=s_loss)
         #return get_AUC(model=model, dataset=dataset, loader=loader)
