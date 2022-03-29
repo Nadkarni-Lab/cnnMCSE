@@ -16,6 +16,8 @@ def get_derivative(loss_list:list, sample_sizes:list):
     """
     log_sample_sizes = np.log(sample_sizes)
     loss_mean = [np.mean(loss) for loss in loss_list]
+    print("Log sample sizes", log_sample_sizes)
+    print("Loss mean", loss_mean)
     y_spl = UnivariateSpline(log_sample_sizes, loss_mean,s=0,k=2)
     y_spl_1d = y_spl.derivative(n=1)
     y_spl_2d = y_spl.derivative(n=2)

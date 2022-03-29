@@ -126,8 +126,11 @@ def get_estimators(
         
         # iterate over training subset. 
         print("Running dataset ")
+        print(trainloader)
+        print(train_subset)
         for j, data in enumerate(trainloader):
             print("Testing data ", j)
+            print('Data', data)
             #print("Running batch" , i)
 
             # Get data

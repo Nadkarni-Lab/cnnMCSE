@@ -40,9 +40,7 @@ def mnist_dataset(root_dir:str, tl_transforms:bool=False):
     return trainset, testset
 
 def fmnist_dataset(root_dir:str, tl_transforms:bool=False):
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+    transform = transforms.Compose([transforms.ToTensor()])
     if(tl_transforms):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
