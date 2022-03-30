@@ -131,9 +131,7 @@ def qmnist_dataset(root_dir:str, tl_transforms:bool=False):
     return trainset, testset
 
 def cifar10_dataset(root_dir:str, tl_transforms:bool=False):
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+    transform = transforms.Compose([transforms.ToTensor()])
 
     if(tl_transforms):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -152,17 +150,13 @@ def cifar10_dataset(root_dir:str, tl_transforms:bool=False):
             normalize
         ])
 
-    trainset = torchvision.datasets.CIFAR10(
-        root = root_dir,
-        train=True,
-        download=True,
-        transform=transform)
+    trainset = torchvision.datasets.CIFAR10(root = root_dir,train=True,download=False,transform=transform)
 
 
     testset = torchvision.datasets.CIFAR10(
         root=root_dir,
         train=False,
-        download=True,
+        download=False,
         transform=transform)
 
 

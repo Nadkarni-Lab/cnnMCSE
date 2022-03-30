@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 from scipy.interpolate import UnivariateSpline
+from cnnMCSE.experiments.sampling import sampling_helper
+from cnnMCSE.experiments.complexity import complexity_helper
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -189,3 +191,21 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
     sample_size_list.sort()
     print(sample_size_list)
     return sample_size_list
+
+def experiment_helper(experiment:str, dataset:str, root_dir:str):
+    print("Experiment", experiment)
+    print("Dataset", dataset)
+    print("Root-dir", root_dir)
+    if(experiment == "sampling"):
+        return sampling_helper(dataset=dataset, root_dir=root_dir)
+    
+    elif(experiment == "complexity"):
+        print("Getting complexity experiment")
+        return complexity_helper(dataset=dataset, root_dir=root_dir)
+    else:
+        return None
+    
+
+
+
+    pass

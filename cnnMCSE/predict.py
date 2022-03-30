@@ -7,9 +7,9 @@ import pandas as pd
 
 from cnnMCSE.dataloader import dataloader_helper
 from cnnMCSE.models import model_helper
-from cnnMCSE.utils.helpers import generate_sample_sizes, get_derivative, get_inflection_point
+from cnnMCSE.utils.helpers import experiment_helper, generate_sample_sizes, get_derivative, get_inflection_point
 from cnnMCSE.mcse import get_estimators, get_estimands
-from cnnMCSE.utils.helpers import estimate_mcse, estimate_smcse
+from cnnMCSE.utils.helpers import estimate_mcse, estimate_smcse, experiment_helper
 from cnnMCSE.experiments.sampling import sampling_helper
 
 def predict_loop(
@@ -186,7 +186,8 @@ def experiment_loop(
     zoo_models:str=None,
     metric_type:str="AUC",
     frequency:bool=False,
-    stratified:bool=False
+    stratified:bool=False,
+    experiment:str=None
     ):
 
     # initialize datasets
@@ -215,7 +216,9 @@ def experiment_loop(
 
     # initialize dataset dictionary
     for current_dataset in dataset_list:
-        dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
+        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir)
+        print(dataset_dict)
+        #dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
 
         # match training and testing
         train_test_match = dataset_dict['train_test_match']
