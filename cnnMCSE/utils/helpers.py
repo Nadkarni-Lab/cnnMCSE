@@ -1,10 +1,12 @@
 """Utility functions for calculate convergence sample estimation from loss curves. 
 """
+from logging import root
 import numpy as np
 import pandas as pd
 from scipy.interpolate import UnivariateSpline
 from cnnMCSE.experiments.sampling import sampling_helper
 from cnnMCSE.experiments.complexity import complexity_helper
+from cnnMCSE.experiments.labels import labels_helper
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -197,11 +199,17 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str):
     print("Dataset", dataset)
     print("Root-dir", root_dir)
     if(experiment == "sampling"):
+        print("Getting sampling experiment.")
         return sampling_helper(dataset=dataset, root_dir=root_dir)
     
     elif(experiment == "complexity"):
-        print("Getting complexity experiment")
+        print("Getting complexity experiment.")
         return complexity_helper(dataset=dataset, root_dir=root_dir)
+
+    elif(experiment == "label"):
+        print("Getting label bias experiment.")
+        return labels_helper(dataset=dataset, root_dir=root_dir)
+
     else:
         return None
     

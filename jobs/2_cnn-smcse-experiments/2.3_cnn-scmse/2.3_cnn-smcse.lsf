@@ -18,14 +18,6 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/1_cnn-mcse-baselines/1.0_cnn-mcse-fcns
 
-
-python cnn-frequency-sauc.py --datasets MNIST --metric_type sAUC --models A3,FCN \
-    --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  \
-    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500 --frequency  \
-    --initial_weights_dir jobs/2_cnn-smcse-experiments/2.2_cnn-frequency-sAUC/weights \
-    --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.2_cnn-frequency-sAUC/data/data.tsv \
-    --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.2_cnn-frequency-sAUC/data/fcn_metadata.tsv
-
 python cnn-smcse.py --datasets MNIST --metric_type sAUC --models A3,FCN \
     --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  \
     --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500 --frequency --stratified \
@@ -35,14 +27,3 @@ python cnn-smcse.py --datasets MNIST --metric_type sAUC --models A3,FCN \
 
 
 python cnn-smcse.py --datasets MNIST --metric_type sAUC --models A3,FCN --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500 --frequency --stratified --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.3_cnn-scmse/weights --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.3_cnn-scmse/data/data.tsv --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.3_cnn-scmse/data/fcn_metadata.tsv
-
-
-
-python cnn-mcse-fcns.py --datasets MNIST \
-    --metric_type sAUC \
-    --models A3,FCN \
-    --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data \
-    --n_bootstraps 1 --shuffle --batch_size 1 --num_workers 0 --max_sample_size 500 \
-    --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/weights \
-    --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/data.tsv \
-    --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/50_fcn_metadata.tsv
