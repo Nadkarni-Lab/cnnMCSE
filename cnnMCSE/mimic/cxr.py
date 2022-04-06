@@ -6,7 +6,7 @@ import pandas as pd
 from PIL import Image
 
 import torch
-from torch.utils.data import Dataset, random_split
+from torch.utils.data import Dataset, random_split, ConcatDataset
 from torchvision import transforms
 
 
@@ -56,7 +56,7 @@ def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
     return labels_df
 
 
-def generate_metadata_file(out_path:str, labels:str, demographics:str, orientations:str):
+def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurance:str):
     
     # read in the records
     cxr_record_df = pd.read_csv(record_list)
@@ -66,6 +66,16 @@ def generate_metadata_file(out_path:str, labels:str, demographics:str, orientati
     demographics = demographics.split(",")
     labels = labels.split(",")
     orientations = orientations.split(",")
+
+    # create outpath:
+    out_config = demographics + labels + orientations
+    out_metadata_filename = '_'.join(out_config)
+    out_metadata_filename = out_metadata_filename + '.tsv'
+    out_metadata_filename = out_metadata_filename.replace("/", "_")
+    out_metadata_path = os.path.join(root_dir, out_metadata_filename)
+    print(out_metadata_filename)
+    print(out_metadata_path)
+
 
     # establish paths
     cxr_record_df['path'] = cxr_record_df['path'].str.replace(".dcm", ".jpg")
@@ -93,16 +103,21 @@ def generate_metadata_file(out_path:str, labels:str, demographics:str, orientati
     cxr_record_df = pd.merge(cxr_record_df, encoded_df, on = ['subject_id', 'study_id'])
 
     # export dataframe. 
-    cxr_record_df.to_csv(out_path, sep="\t", index=False)
+    cxr_record_df.to_csv(out_metadata_path, sep="\t", index=False)
+    return out_metadata_path
     
 
 def generate_dataloaders(
-        metadata_path:str, 
+        metadata_path:str=None, 
+        metadata_paths:str=None,
         tl_transforms:bool=False,
         split_ratio:float=0.8, 
         start_seed:int=42
     ):
     generator_1 = torch.Generator().manual_seed(start_seed)
+    generator_2 = torch.Generator().manual_seed(start_seed+1)
+
+    metadata_path_1, metadata_path_2 = metadata_paths
     # generator_2 = torch.Generator().manual_seed(start_seed+1)
 
     if(tl_transforms == False):
@@ -124,24 +139,46 @@ def generate_dataloaders(
     else:
         transform = transforms.Compose([transforms.ToTensor()])
 
-    dataset = MimicCXRDataset(
-        metadata_path=metadata_path,
+    dataset_1 = MimicCXRDataset(
+        metadata_path=metadata_path_1,
         transform=transform
     )
-    len_dataset = len(dataset)
-    len_trainset = int(len_dataset * split_ratio)
-    len_testset = len_dataset - len_trainset
-    trainset_1, testset_1 = random_split(dataset, [len_trainset, len_testset], generator=generator_1)
+    len_dataset_1 = len(dataset_1)
+    len_trainset_1 = int(len_dataset_1 * split_ratio)
+    len_testset_1 = len_dataset_1 - len_trainset_1
+    trainset_1, testset_1 = random_split(dataset_1, [len_trainset_1, len_testset_1], generator=generator_1)
+
+    dataset_2 = MimicCXRDataset(
+        metadata_path=metadata_path_2,
+        transform=transform
+    )
+    len_dataset_2 = len(dataset_2)
+    len_trainset_2 = int(len_dataset_2 * split_ratio)
+    len_testset_2 = len_dataset_2 - len_trainset_2
+    trainset_2, testset_2 = random_split(dataset_2, [len_trainset_2, len_testset_2], generator=generator_2)
     # trainset_2, testset_2 = random_split(dataset, [len_dataset*split_ratio, len_dataset*(1-split_ratio)], generator=generator_2)
+    joint_trainset = ConcatDataset([trainset_1, trainset_2])
+    joint_testset = ConcatDataset([testset_1, testset_2])
 
     dataset_dict = {
         'subsample_1': trainset_1, 
         'testsample_1': testset_1, 
+        'subsample_2' : trainset_2,
+        'testsample_2': testset_2,
+        'joint_trainset' : joint_trainset,
+        'joint_testset' : joint_testset,
         'train_test_match': [
-            ['subsample_1', 'testsample_1']
+            ['subsample_1', 'testsample_1'], 
+            ['subsample_2', 'testsample_2'], 
+            ['joint_trainset', 'joint_testset'], 
+            ['joint_trainset', 'testsample_1'],
+            ['joint_trainset', 'testsample_2']
         ]
     }
     return dataset_dict
+
+def ethnicity_experiments(root_dir:str):
+    pass
 
 
 def mimic_helper(dataset, root_dir):
@@ -154,6 +191,39 @@ def mimic_helper(dataset, root_dir):
 
         )
         return generate_dataloaders(metadata_path=root_dir)
+    
+    if(dataset == "ethnicity"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax',
+            demographics='WHITE',
+            orientations='postero-anterior'
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior'
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2])
+    
+    if(dataset == "uninsured"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            insurance='Medicare'
+        )
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            insurance='Other'
+        )
+
+
 
 
 
