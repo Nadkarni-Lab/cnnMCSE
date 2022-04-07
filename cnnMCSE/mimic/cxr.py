@@ -56,7 +56,7 @@ def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
     return labels_df
 
 
-def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurance:str):
+def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurances:str=None):
     
     # read in the records
     cxr_record_df = pd.read_csv(record_list)
@@ -66,9 +66,10 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     demographics = demographics.split(",")
     labels = labels.split(",")
     orientations = orientations.split(",")
+    insurances = insurances.split(",")
 
     # create outpath:
-    out_config = demographics + labels + orientations
+    out_config = demographics + labels + orientations + insurances
     out_metadata_filename = '_'.join(out_config)
     out_metadata_filename = out_metadata_filename + '.tsv'
     out_metadata_filename = out_metadata_filename.replace("/", "_")
@@ -90,11 +91,19 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
 
     # select relevant subgroups. 
     mimic_admission_df = pd.read_csv(mimic_admissions_path)
-    ethnicity_df = mimic_admission_df[['subject_id', 'ethnicity']].drop_duplicates()
+    ethnicity_df = mimic_admission_df[['subject_id', 'ethnicity', 'insurance']].drop_duplicates()
     cxr_record_df = pd.merge(cxr_record_df, ethnicity_df, on='subject_id')
     cxr_record_df = cxr_record_df[
         cxr_record_df['ethnicity'].isin(demographics)
     ]
+
+    if(insurances):
+        cxr_record_df = cxr_record_df[
+            cxr_record_df['insurance'].isin(insurances)
+        ]
+        print("Length", len(cxr_record_df))
+
+
 
     # select relevant labels. 
     labels_df = pd.read_csv(chexpert)
@@ -207,23 +216,22 @@ def mimic_helper(dataset, root_dir):
         )
         return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2])
     
-    if(dataset == "uninsured"):
+    if(dataset == "medicare"):
         metadata_path_1 = generate_metadata_file(
             root_dir=root_dir, 
             labels='Pneumonia,Pneumothorax',
             demographics='WHITE',
             orientations='postero-anterior',
-            insurance='Medicare'
+            insurances='Medicare'
         )
         metadata_path_1 = generate_metadata_file(
             root_dir=root_dir, 
             labels='Pneumonia,Pneumothorax',
             demographics='WHITE',
             orientations='postero-anterior',
-            insurance='Other'
+            insurances='Other'
         )
-
-
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2])
 
 
 
