@@ -23,5 +23,5 @@ python figure-1a.py --datasets MNIST --metric_type sAUC --models A3,FCN \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \
     --n_bootstraps 50 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000 --frequency --stratified \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/figure_1/a/weights \
-    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/a/fcn_data.tsv \
-    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/a/fcn_metadata.tsv 
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/a/fcn_data_50.tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/a/fcn_metadata_50.tsv 
