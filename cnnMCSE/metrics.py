@@ -228,7 +228,7 @@ def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
         print(f"Running model... {index} ")
         sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df['estimands'] = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
-        sauc_df['model'] = index
+        sauc_df['bootstrap'] = index
         sauc_dfs.append(sauc_df)
     
     sauc_df = pd.concat(sauc_dfs)

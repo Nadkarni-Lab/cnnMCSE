@@ -183,6 +183,8 @@ def get_estimators(
                     s_losses[key].append(s_loss)
                 else:
                     s_losses[key] = [s_loss]
+            
+  
 
 
     if(frequency == True):
@@ -190,17 +192,37 @@ def get_estimators(
             'estimators': losses
         }
         loss_df = pd.DataFrame(loss_dict)
+        loss_df = loss_df.reset_index()
+        loss_df['bootstrap'] = loss_df['index']
         frequency_df = metric_helper(models=None, metric_type="frequencies", datasets=train_subsets, num_workers=0)
-
-        merged_df = pd.concat([loss_df, frequency_df], axis=1)
+        print(frequency_df)
+        print(loss_df)
+        merged_df = frequency_df.merge(loss_df, on='bootstrap')
+        print(merged_df)
+        #merged_df = pd.concat([loss_df, frequency_df], axis=1, ignore_index=True)
         
         if(stratified):
-            s_mcse_df = pd.DataFrame.from_dict(s_losses, orient='index', columns = ['s_estimators'])
-            s_mcse_df = s_mcse_df.reset_index()
-            s_mcse_df['label']  = s_mcse_df['index']
+            print(s_losses)
+            for key, value in s_losses.items():
+                while(len(s_losses[key]) < bootstraps):
+                    s_losses[key].append(None)
+            
+            val_dict = {}
+            val_dict['bootstrap'] = []
+            val_dict['label'] = []
+            val_dict['s_estimators'] = []
+
+            for key, item in s_losses.items():
+                val_dict['bootstrap'] += ([i for i in range(len(item))])
+                val_dict['label'] += ([key for i in range(len(item))])
+                val_dict['s_estimators'] += (item)
+
+            s_mcse_df = pd.DataFrame.from_dict(val_dict)
+            #s_mcse_df = s_mcse_df.reset_index()
+            #s_mcse_df['label']  = s_mcse_df['index']
             print(s_mcse_df)
             print(merged_df)
-            merged_df = merged_df.merge(s_mcse_df, on='label')
+            merged_df = merged_df.merge(s_mcse_df, on=['label', 'bootstrap'])
 
         merged_df['sample_size'] = sample_size
         return merged_df

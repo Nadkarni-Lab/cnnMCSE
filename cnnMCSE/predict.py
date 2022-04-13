@@ -125,7 +125,7 @@ def predict_loop(
                 print(estimators)
                 if(metric_type == "sAUC"):
                     if(frequency):
-                        outputs = estimators.merge(estimands, on='label')
+                        outputs = estimators.merge(estimands, on=['label', 'bootstrap'])
                         print(outputs)
                         # outputs = pd.concat([estimands, estimators], axis=1)
                         df_merged = outputs.merge(df, on=['bootstrap', 'sample_size'])
