@@ -1,6 +1,21 @@
 """Script to help with transfer learning. 
 """
+import torch
+import torch.nn as nn
 from torchvision import models
+
+class TransferFeatures(nn.Module):
+    def __init__(self, original_model):
+        super(TransferFeatures, self).__init__()
+        self.features = original_model.features
+        print(self.features)
+        for p in self.features.parameters():
+            p.requires_grad = False
+    
+    def forward(self, x):
+        f = self.features(x)
+        f = torch.flatten(f, start_dim=1)
+        return f
 
 def transfer_helper(transfer_base_model:str):
     """Method to generate pretrained model. 
@@ -16,7 +31,8 @@ def transfer_helper(transfer_base_model:str):
 
     elif(transfer_base_model == "alexnet"):
         model = models.alexnet(pretrained=True)
-
+        model = TransferFeatures(original_model=model)
+        
     elif(transfer_base_model == "squeezenet"):    
         model = models.squeezenet1_0(pretrained=True)
     

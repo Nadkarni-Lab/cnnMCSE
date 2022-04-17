@@ -93,7 +93,7 @@ def get_estimators(
         # Initialize current model. 
         print(f"Initialize current model. {initial_weights}")
         if(zoo_model): 
-            current_model = model(input_size=1000)
+            current_model = model(input_size=9216)
         else:
             current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))
@@ -118,7 +118,7 @@ def get_estimators(
 
         # Optimize model with stochastic gradient descent. 
         print("Optimize model with stochastic gradient descent. ")
-        optimizer_model = optim.SGD(current_model.parameters(), lr=0.01, momentum=0.9)
+        optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
 
         # Set up training loop
         running_loss = 0.0
@@ -246,7 +246,8 @@ def get_estimands(
     shuffle:bool=False,
     metric_type:str="AUC",
     num_workers:int=1,
-    zoo_model:str=None
+    zoo_model:str=None,
+    n_epochs:int=10
     ):
     """Method to generate estimands. 
 
@@ -298,7 +299,7 @@ def get_estimands(
         # Initialize current model. 
         print("Initialize current model. ")
         if(zoo_model): 
-            current_model = model(input_size=1000)
+            current_model = model(input_size=9216)
         else:
             current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))
@@ -315,33 +316,35 @@ def get_estimands(
         # Assign CrossEntropyLoss and stochastic gradient descent optimizer. 
         print("Run cross entropy loss")
         criterion = nn.CrossEntropyLoss()
-        optimizer_model = optim.SGD(current_model.parameters(), lr=0.01, momentum=0.9)
+        optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
 
         # Train the model.  
         print("Running loop for estimands")
-        for j, data in enumerate(trainloader):
-            print("Testing data ", j)
-            # Get data
-            inputs, labels = data
-            #inputs = torch.flatten(inputs, start_dim=1)
-            inputs, labels = inputs.to(device), labels.to(device)
+        for epoch in range(n_epochs):
+            print("Running epoch... ", epoch)
+            for j, data in enumerate(trainloader):
+                print("Testing data ", j)
+                # Get data
+                inputs, labels = data
+                #inputs = torch.flatten(inputs, start_dim=1)
+                inputs, labels = inputs.to(device), labels.to(device)
 
-            if(pretrained_model):
-                inputs = pretrained_model(inputs)
+                if(pretrained_model):
+                    inputs = pretrained_model(inputs)
 
 
-            # Zero parameter gradients
-            optimizer_model.zero_grad()
+                # Zero parameter gradients
+                optimizer_model.zero_grad()
 
-            # Forward + backward + optimize
-            outputs = current_model(inputs)
+                # Forward + backward + optimize
+                outputs = current_model(inputs)
 
-            print(outputs.shape)
-            print(labels.shape)
+                print(outputs.shape)
+                print(labels.shape)
 
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer_model.step()
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer_model.step()
         
         models.append(current_model)
 

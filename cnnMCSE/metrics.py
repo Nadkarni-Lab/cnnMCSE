@@ -148,24 +148,31 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     roc_dict = {}
     unique_labels = list(set(model_labels))
 
-
+    print('Unique labels', unique_labels)
     print('Model Labels', len(model_labels))
     print('Model Predictions',len(model_predictions))
+    print('Prediction probabilities', )
 
     roc_dfs = list()
     roc_dict = {}
     for unique_label in unique_labels:
+
+        # Source of error is here
         print("Running unique label", unique_label)
         current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
         current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
         current_label_predictions = [model_predictions[i] for i in current_label_indices]
+        print('Current Label Indices', current_label_indices)
+        print('Current Labels', current_labels)
+        print('Current Label Predictions', current_label_predictions)
+
         fpr = dict()
         tpr = dict()
         roc_auc = dict()
         print("Calculating AUC.")
-        class_list = [i for i in range(num_classes)]
-        labels_binarized = label_binarize(current_label_indices, classes=class_list)
-        predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
+        #class_list = [i for i in range(num_classes)]
+        #labels_binarized = label_binarize(current_label_indices, classes=class_list)
+        #predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
 
         print("Getting ROC curve. ")
         fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
@@ -180,6 +187,127 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     roc_df = pd.concat(roc_dfs)
     #print(roc_auc['micro'])
     return roc_df
+
+
+def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:int=10, zoo_model:str=None):
+    """Get Area-Under-Curve Metric on a test dataset. 
+
+    Args:
+        model (_type_): Model to validate. 
+        dataset (_type_): Dataset to use. 
+
+    Returns:
+        float: AUC metric. 
+    """
+
+    # Using device. 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
+
+    # Using PreTrained Model. 
+    if(zoo_model):
+        pretrained_model = transfer_helper(zoo_model)
+        pretrained_model = nn.DataParallel(pretrained_model)
+        pretrained_model = pretrained_model.to(device=device) 
+    else:
+        pretrained_model = None
+
+    current_model = model
+    current_model = nn.DataParallel(current_model)
+    current_model.to(device)
+    current_model.eval()
+
+    model_predictions = []
+    model_labels      = []
+
+    print("Generating predictions")
+    print(len(loader))
+    #with torch.no_grad():
+    print("Broken here....")
+    unique_labels = [i for i in range(num_classes)]
+    probability_dict = {}
+    probability_tensor = torch.Tensor()
+    probability_tensor = probability_tensor.to(device)
+
+    # for unique_label in unique_labels:
+    #     probability_dict[unique_label] = list()
+
+    for index, data in enumerate(loader):
+        print("Running index", index)
+        images, labels = data
+        images, labels = images.to(device), labels.to(device)
+
+        if(pretrained_model):
+            images = pretrained_model(images)
+
+        # images, labels = images.to(DEVICE), labels.to(DEVICE)
+        output = current_model(images)
+        probs = torch.sigmoid(output)
+        print(output)
+        print(output.shape)
+        probability_tensor = torch.cat((probability_tensor, probs), dim=0)
+        model_labels = model_labels + labels.tolist()
+
+            
+            # _, predicted = torch.max(output.data, 1)
+            # model_predictions = model_predictions + predicted.tolist()
+            # model_labels = model_labels + labels.tolist()
+                # model_predictions.append(predicted.tolist())
+                #print('Predictions', predicted.shape)
+            # for prediction in predicted:
+            #     #print('Predicted', prediction.shape)
+            #     model_predictions.append(prediction.tolist())
+            # for label in labels:
+            #     #print('Labels', label.shape)
+            #     model_labels.append(label.tolist())
+
+    roc_dicts = list()
+    roc_dict = {}
+    unique_labels = list(set(model_labels))
+
+    print('Probability tensor shape', probability_tensor.shape)
+
+    print('Unique labels', unique_labels)
+    print('Model Labels', len(model_labels))
+    print('Model Predictions',len(model_predictions))
+    print('Prediction probabilities', )
+
+    roc_dfs = list()
+    roc_dict = {}
+    for unique_label in unique_labels:
+        label_probabilities = probability_tensor.select(dim=-1, index=unique_label)
+        label_probabilities = label_probabilities.tolist()
+
+        # Source of error is here
+        print("Running unique label", unique_label)
+        #current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
+        #current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
+        #current_label_predictions = [model_predictions[i] for i in current_label_indices]
+        #print('Current Label Indices', current_label_indices)
+        #print('Current Labels', current_labels)
+        #print('Current Label Predictions', current_label_predictions)
+
+        fpr = dict()
+        tpr = dict()
+        roc_auc = dict()
+        print("Calculating AUC.")
+        #class_list = [i for i in range(num_classes)]
+        #labels_binarized = label_binarize(current_label_indices, classes=class_list)
+        #predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
+
+        print("Getting ROC curve. ")
+        fpr['micro'], tpr['micro'], _ = metrics.roc_curve(model_labels, label_probabilities, pos_label=unique_label)
+        roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
+        
+        print('Current AUC', roc_auc['micro'])
+        roc_dict['label'] = [unique_label]
+        roc_dict[f's_estimands'] = [float(roc_auc['micro'])]
+        roc_df = pd.DataFrame(roc_dict)
+        roc_dfs.append(roc_df)
+    
+    roc_df = pd.concat(roc_dfs)
+    #print(roc_auc['micro'])
+    return roc_df 
 
 
 
@@ -226,7 +354,8 @@ def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     sauc_dfs = list()
     for index, model in enumerate(models):
         print(f"Running model... {index} ")
-        sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
+        #sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
+        sauc_df = get_sAUC2(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df['estimands'] = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df['bootstrap'] = index
         sauc_dfs.append(sauc_df)

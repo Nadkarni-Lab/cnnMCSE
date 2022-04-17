@@ -219,6 +219,35 @@ class AlexNetAE(nn.Module):
         x = x.reshape(self.input_dim)
         return x
 
+class TransferFeatures(nn.Module):
+    def __init__(self, pretrained_model, classifier=None, model_name=None):
+        super(TransferFeatures, self).__init__()
+
+        self.features = pretrained_model.features
+        print(self.features)
+        self.classifier = nn.Sequential(
+            nn.Linear(256 * 6 * 6, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, 10),
+        )
+        self.modelName = model_name
+
+        # Freeze those weights
+        for p in self.features.parameters():
+            p.requires_grad = False
+
+    def forward(self, x):
+        f = self.features(x)
+        # flatten network
+        f = f.view(f.size(0), np.prod(f.shape[1:]))
+        y = self.classifier(f)
+        return y
+
+
+
 def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Module:
     """Method to return torch model. 
 
@@ -263,7 +292,21 @@ def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Mo
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
         return A3, initial_weights_path
+    
+    elif(model == "tlFCN2"):
+        initial_model = FCN(input_size=9216)
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
+    
+    elif(model == "tlAE2"):
+        initial_model = A3(input_size=9216)
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
 
+
+    
     else:
         return None
     

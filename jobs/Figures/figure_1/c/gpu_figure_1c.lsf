@@ -21,10 +21,10 @@ source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_1/c
 
 python figure-1c.py --datasets MNIST,FMNIST,KMNIST,QMNIST,EMNIST,CIFAR10,STL10,FAKE --metric_type sAUC  \
-    --models tlAE,tlFCN \
+    --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \
-    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000 --frequency --stratified \
+    --n_bootstraps 50 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000 --frequency --stratified \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_1/c/weights \
-    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/c/data.tsv \
-    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/c/metadata.tsv 
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/c/data_epochs_test.tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure1/c/metadata_epochs_test.tsv 
