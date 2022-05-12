@@ -37,7 +37,8 @@ def get_estimators(
     num_workers:int=1,
     zoo_model:str=None,
     frequency:bool=False,
-    stratified:bool=False):
+    stratified:bool=False,
+    n_epochs:int=1):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -128,48 +129,50 @@ def get_estimators(
         print("Running dataset ")
         print(trainloader)
         print(train_subset)
-        for j, data in enumerate(trainloader):
-            print("Testing data ", j)
-            print('Data', data)
-            #print("Running batch" , i)
+        for i in range(n_epochs):
+            for j, data in enumerate(trainloader):
+                print("Testing data ", j)
+                print('Data', data)
+                #print("Running batch" , i)
 
-            # Get data
-            inputs, labels = data
-            #inputs = inputs.flatten()
-            inputs, labels = inputs.to(device), labels.to(device)
+                # Get data
+                inputs, labels = data
+                #inputs = inputs.flatten()
+                inputs, labels = inputs.to(device), labels.to(device)
 
-            if(pretrained_model):
-                inputs = pretrained_model(inputs)
+                if(pretrained_model):
+                    inputs = pretrained_model(inputs)
 
-            # Zero parameter gradients
-            optimizer_model.zero_grad()
+                # Zero parameter gradients
+                optimizer_model.zero_grad()
 
-            # Forward + backward + optimize
-            print(inputs.shape)
-            outputs = current_model(inputs)
-            print('Output shape', outputs.shape)
-            # Accomodate for intra-model flattening. 
-            inputs = inputs.reshape(outputs.shape)
-            print('Input shape', inputs.shape)
-            loss = criterion(outputs, inputs)
+                # Forward + backward + optimize
+                print(inputs.shape)
+                outputs = current_model(inputs)
+                print('Output shape', outputs.shape)
+                # Accomodate for intra-model flattening. 
+                inputs = inputs.reshape(outputs.shape)
+                print('Input shape', inputs.shape)
+                loss = criterion(outputs, inputs)
 
-            if(stratified):
-                print("Running stratified loss...")
-                s_loss = s_criterion(outputs, inputs)
-                labels = labels.tolist()
-                s_loss_dict = metric_helper(metric_type="sloss", s_loss=s_loss, labels=labels, models=None)
+                if(stratified and (i == n_epochs - 1)):
+                    print("Running stratified loss...")
+                    s_loss = s_criterion(outputs, inputs)
+                    labels = labels.tolist()
+                    s_loss_dict = metric_helper(metric_type="sloss", s_loss=s_loss, labels=labels, models=None)
 
-            loss.backward()
-            optimizer_model.step()
+                loss.backward()
+                optimizer_model.step()
 
-            running_loss += loss.item()
+                running_loss += loss.item()
 
-            print("Adding losses to running losses...")
-            for key, value in s_loss_dict.items():
-                if(key in s_running_loss):
-                    s_running_loss[key] += s_loss_dict[key][0]
-                else:
-                    s_running_loss[key] = s_loss_dict[key][0]
+                print("Adding losses to running losses...")
+                if(i == n_epochs - 1):
+                    for key, value in s_loss_dict.items():
+                        if(key in s_running_loss):
+                            s_running_loss[key] += s_loss_dict[key][0]
+                        else:
+                            s_running_loss[key] = s_loss_dict[key][0]
 
 
         # Add loss
@@ -247,7 +250,7 @@ def get_estimands(
     metric_type:str="AUC",
     num_workers:int=1,
     zoo_model:str=None,
-    n_epochs:int=10
+    n_epochs:int=1
     ):
     """Method to generate estimands. 
 

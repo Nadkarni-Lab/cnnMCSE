@@ -171,11 +171,11 @@ def estimate_mcse(df:pd.DataFrame):
 
 
 
-def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = False):
+def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
     sample_size_list = list()
 
 
-    if(absolute_scale == False):
+    if(absolute_scale == None):
         current_sample_size = min_sample_size
         while current_sample_size < max_sample_size:
             sample_size_list.append(current_sample_size)
@@ -195,13 +195,13 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
     print(sample_size_list)
     return sample_size_list
 
-def experiment_helper(experiment:str, dataset:str, root_dir:str):
+def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:bool=False):
     print("Experiment", experiment)
     print("Dataset", dataset)
     print("Root-dir", root_dir)
     if(experiment == "sampling"):
         print("Getting sampling experiment.")
-        return sampling_helper(dataset=dataset, root_dir=root_dir)
+        return sampling_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
     
     elif(experiment == "complexity"):
         print("Getting complexity experiment.")

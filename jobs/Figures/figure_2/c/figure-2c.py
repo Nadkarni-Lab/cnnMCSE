@@ -1,10 +1,10 @@
 """Generate minimum-convergence sample estimates with convolutional neural networks on simple test cases. 
 """
 import argparse
-from cnnMCSE.predict import predict_loop
+from cnnMCSE.predict import experiment_loop
 
 def main(**config_kwargs):
-    predict_loop(**config_kwargs)
+    experiment_loop(**config_kwargs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Configuration arguments for convergence sample size estimtation.')
@@ -65,6 +65,9 @@ if __name__ == "__main__":
     
     parser.add_argument("--stratified", action='store_true', 
                         help="Calculate stratified losses for minimum convergence sample estimation.")
+    
+    parser.add_argument("--experiment", required=True, type=str, 
+                        help="Experiment to run for bias detection.")
 
 
     config_kwargs = parser.parse_args()
@@ -72,4 +75,9 @@ if __name__ == "__main__":
 
 
 def initial_command():
-    return """python cnn-frequency-sauc.py --datasets MNIST --metric_type sAUC --models A3,FCN --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500 --frequency  --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/weights --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/data.tsv --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/2_cnn-smcse-experiments/2.1_cnn-smcse-sAUC/output/fcn_metadata.tsv"""
+    return f"""python cnn-mcse-sample-bias.py --datasets MNIST --metric_type sAUC --models A3,FCN \
+    --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data  \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 500 --frequency --stratified \
+    --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/3_cnn-mcse-bias/3.1_cnn-mcse-sample-bias/weights/weights \
+    --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/3_cnn-mcse-bias/3.1_cnn-mcse-sample-bias/data/data.tsv \
+    --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/3_cnn-mcse-bias/3.1_cnn-mcse-sample-bias/data/fcn_metadata.tsv"""

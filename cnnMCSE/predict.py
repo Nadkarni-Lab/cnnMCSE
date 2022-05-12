@@ -17,7 +17,6 @@ def predict_loop(
     models:str,
     root_dir:str,
     batch_size:int,
-    n_epochs:int,
     n_workers:int,
     max_sample_size:int,
     log_scale:int,
@@ -26,6 +25,7 @@ def predict_loop(
     n_bootstraps:int,
     initial_weights_dir:str, 
     out_data_path:str,
+    n_epochs:int=1,
     state_dict_dir:str=None,
     out_metadata_path:str=None, 
     start_seed:int = 42,
@@ -86,7 +86,8 @@ def predict_loop(
                     num_workers=num_workers, 
                     zoo_model=zoo_model,
                     frequency=frequency,
-                    stratified=stratified
+                    stratified=stratified,
+                    n_epochs=n_epochs
                 )
                 
 
@@ -102,7 +103,8 @@ def predict_loop(
                     metric_type=metric_type,
                     initial_weights=initial_estimand_weights_path,
                     num_workers=num_workers,
-                    zoo_model=zoo_model
+                    zoo_model=zoo_model,
+                    n_epochs=n_epochs
                 )
 
                 #--- Logging block. 
@@ -216,7 +218,7 @@ def experiment_loop(
 
     # initialize dataset dictionary
     for current_dataset in dataset_list:
-        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir)
+        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, tl_transforms=using_pretrained)
         print(dataset_dict)
         #dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
 
@@ -290,7 +292,7 @@ def experiment_loop(
                     print(estimators)
                     if(metric_type == "sAUC"):
                         if(frequency):
-                            outputs = estimators.merge(estimands, on='label')
+                            outputs = estimators.merge(estimands, on=['label', 'bootstrap'])
                             print(outputs)
                             # outputs = pd.concat([estimands, estimators], axis=1)
                             df_merged = outputs.merge(df, on=['bootstrap', 'sample_size'])
