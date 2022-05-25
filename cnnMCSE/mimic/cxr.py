@@ -66,10 +66,13 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     demographics = demographics.split(",")
     labels = labels.split(",")
     orientations = orientations.split(",")
-    insurances = insurances.split(",")
+    if(insurances): insurances = insurances.split(",")
 
     # create outpath:
-    out_config = demographics + labels + orientations + insurances
+    out_config = demographics + labels + orientations
+    if(insurances):
+        out_config = out_config + insurances
+
     out_metadata_filename = '_'.join(out_config)
     out_metadata_filename = out_metadata_filename + '.tsv'
     out_metadata_filename = out_metadata_filename.replace("/", "_")
@@ -123,10 +126,14 @@ def generate_dataloaders(
         split_ratio:float=0.8, 
         start_seed:int=42
     ):
+    print('TL transforms', tl_transforms)
     generator_1 = torch.Generator().manual_seed(start_seed)
     generator_2 = torch.Generator().manual_seed(start_seed+1)
-
-    metadata_path_1, metadata_path_2 = metadata_paths
+    if(metadata_paths):
+        metadata_path_1, metadata_path_2 = metadata_paths
+    else:
+        metadata_path_1 = metadata_path
+        metadata_path_2 = metadata_path
     # generator_2 = torch.Generator().manual_seed(start_seed+1)
 
     if(tl_transforms == False):
@@ -190,16 +197,16 @@ def ethnicity_experiments(root_dir:str):
     pass
 
 
-def mimic_helper(dataset, root_dir):
+def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "test"):
-        generate_metadata_file(
-            out_path=root_dir, 
+        metadata_path = generate_metadata_file(
+            root_dir=root_dir, 
             labels='Pneumonia,Pneumothorax',
             demographics='WHITE',
             orientations='postero-anterior'
 
         )
-        return generate_dataloaders(metadata_path=root_dir)
+        return generate_dataloaders(metadata_path=metadata_path, tl_transforms=tl_transforms)
     
     if(dataset == "ethnicity"):
         metadata_path_1 = generate_metadata_file(
@@ -214,7 +221,7 @@ def mimic_helper(dataset, root_dir):
             demographics='BLACK/AFRICAN AMERICAN',
             orientations='postero-anterior'
         )
-        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2])
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
     
     if(dataset == "medicare"):
         metadata_path_1 = generate_metadata_file(
@@ -231,7 +238,7 @@ def mimic_helper(dataset, root_dir):
             orientations='postero-anterior',
             insurances='Other'
         )
-        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2])
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
 
 
 

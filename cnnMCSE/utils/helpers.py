@@ -205,14 +205,14 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
     
     elif(experiment == "complexity"):
         print("Getting complexity experiment.")
-        return complexity_helper(dataset=dataset, root_dir=root_dir)
+        return complexity_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
 
     elif(experiment == "label"):
         print("Getting label bias experiment.")
-        return labels_helper(dataset=dataset, root_dir=root_dir)
+        return labels_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
     
     elif(experiment == "MIMIC"):
-        return mimic_helper(dataset=dataset, root_dir=root_dir)
+        return mimic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
 
     else:
         return None

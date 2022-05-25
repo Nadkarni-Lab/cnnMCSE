@@ -51,9 +51,9 @@ def complexity_mnist(root_dir,
     return dataset_dict
 
 
-def complexity_helper(root_dir, dataset):
+def complexity_helper(root_dir, dataset, tl_transforms: bool=False):
 
     if(dataset == "MNIST"):
-        return complexity_mnist(root_dir=root_dir)
+        return complexity_mnist(root_dir=root_dir, tl_transforms=tl_transforms)
     else:
         return None

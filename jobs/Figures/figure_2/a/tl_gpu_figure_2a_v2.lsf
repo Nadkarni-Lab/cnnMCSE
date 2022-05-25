@@ -1,9 +1,9 @@
 
-#BSUB -J sampling_experiment_TL_5a_5E
+#BSUB -J sampling_experiment_TL_ratios_50K_50E_private
 #BSUB -P acc_EHR_ML 
-#BSUB -q gpu 
+#BSUB -q private 
 #BSUB -n 4
-#BSUB -W 144:00 
+#BSUB -W 300:00 
 #BSUB -R rusage[mem=16000]
 #BSUB -R rusage[ngpus_excl_p=1]
 #BSUB -R span[hosts=1]
@@ -20,12 +20,12 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_2/a
 
-python figure-2a.py --datasets MNIST --metric_type sAUC --experiment sampling \
+python figure-2a.py --datasets MNIST_ratios --metric_type sAUC --experiment sampling \
     --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \
-    --n_bootstraps 5 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000 --frequency --n_epochs 5 --stratified \
+    --n_bootstraps 50 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 50000 --frequency --stratified \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_2/a/weights \
-    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure2/a/tl_data_5E.tsv \
-    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure2/a/tl_metadata_5E.tsv
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure2/a/tl_data_ratios_50E_50K_V2.tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure2/a/tl_metadata_ratios_50E_50K_V2.tsv
 
