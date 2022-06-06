@@ -1,2 +1,14 @@
 *.tsv
 *.pt
+*logs/
+*tl_logs/
+*weights/
+*jupyter_*
+*.stderr
+*.stdout
+build/
+data/
+cnnMCSE.egg-info/
+dist/
+mcse-venv/
+notebooks/*
