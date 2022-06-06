@@ -24,7 +24,7 @@ python figure-3a.py --datasets test --metric_type sAUC --experiment MIMIC \
     --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \
-    --n_bootstraps 5 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000 --frequency --stratified \
+    --n_bootstraps 5 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 50000 --frequency --stratified \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_3/a/weights \
     --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure3/a/tl_data.tsv \
     --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure3/a/tl_metadata.tsv

@@ -3,6 +3,7 @@
 import os
 import pandas as pd
 
+from os.path import exists
 from PIL import Image
 
 import torch
@@ -12,7 +13,7 @@ from torchvision import transforms
 
 
 JPG_DIR = '/sc/arion/projects/mscic1/data/mimic-cxr-jpg/physionet.org/files/mimic-cxr-jpg/2.0.0'
-RECORD_DIR = '/sc/arion/projects/mscic1/data/mimc-cxr/physionet.org/files/mimic-cxr/2.0.0'
+RECORD_DIR = '/sc/arion/projects/mscic1/data/mimic-cxr/physionet.org/files/mimic-cxr/2.0.0'
 DEM_DIR = '/sc/arion/projects/mscic1/data/mimic-iv-v1/physionet.org/files/mimiciv/1.0/core'
 metadata = os.path.join(JPG_DIR, 'mimic-cxr-2.0.0-metadata.csv.gz')
 chexpert = os.path.join(JPG_DIR, 'mimic-cxr-2.0.0-chexpert.csv.gz')
@@ -115,7 +116,8 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     cxr_record_df = pd.merge(cxr_record_df, encoded_df, on = ['subject_id', 'study_id'])
 
     # export dataframe. 
-    cxr_record_df.to_csv(out_metadata_path, sep="\t", index=False)
+    if(exists(out_metadata_path) == False): 
+        cxr_record_df.to_csv(out_metadata_path, sep="\t", index=False)
     return out_metadata_path
     
 
@@ -201,7 +203,7 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "test"):
         metadata_path = generate_metadata_file(
             root_dir=root_dir, 
-            labels='Pneumonia,Pneumothorax',
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
             demographics='WHITE',
             orientations='postero-anterior'
 
@@ -211,13 +213,13 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "ethnicity"):
         metadata_path_1 = generate_metadata_file(
             root_dir=root_dir, 
-            labels='Pneumonia,Pneumothorax',
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
             demographics='WHITE',
             orientations='postero-anterior'
         )
         metadata_path_2 = generate_metadata_file(
             root_dir=root_dir, 
-            labels='Pneumonia,Pneumothorax',
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
             demographics='BLACK/AFRICAN AMERICAN',
             orientations='postero-anterior'
         )
@@ -226,14 +228,14 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "medicare"):
         metadata_path_1 = generate_metadata_file(
             root_dir=root_dir, 
-            labels='Pneumonia,Pneumothorax',
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
             demographics='WHITE',
             orientations='postero-anterior',
             insurances='Medicare'
         )
-        metadata_path_1 = generate_metadata_file(
+        metadata_path_2 = generate_metadata_file(
             root_dir=root_dir, 
-            labels='Pneumonia,Pneumothorax',
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
             demographics='WHITE',
             orientations='postero-anterior',
             insurances='Other'

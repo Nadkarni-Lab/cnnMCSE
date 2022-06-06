@@ -38,7 +38,8 @@ def get_estimators(
     zoo_model:str=None,
     frequency:bool=False,
     stratified:bool=False,
-    n_epochs:int=1):
+    n_epochs:int=1,
+    current_bootstrap:int=None):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -71,12 +72,18 @@ def get_estimators(
     train_subsets = list()
     s_losses = {}
 
+    if(current_bootstrap):
+        bootstraps = 1
+
     for i in range(bootstraps):
         print("Running loop ", i)
 
         # Create a generator for replicability. 
         print("Generating generator")
-        generator = torch.Generator().manual_seed(start_seed+i)
+        if(current_bootstrap):
+            generator = torch.Generator().manual_seed(start_seed+current_bootstrap)
+        else:
+            generator = torch.Generator().manual_seed(start_seed+i)
 
         # generate a unique training subset.
         print("Creating training subset")
@@ -250,7 +257,8 @@ def get_estimands(
     metric_type:str="AUC",
     num_workers:int=1,
     zoo_model:str=None,
-    n_epochs:int=1
+    n_epochs:int=1,
+    current_bootstrap:int=None
     ):
     """Method to generate estimands. 
 
@@ -282,11 +290,18 @@ def get_estimands(
     models = list()
     model_paths = list()
     metrics = list()
+
+    if(current_bootstrap):
+        bootstraps = 1
+
     for i in range(bootstraps):
         print("Running estimands ", i)
         # Create a generator for replicability. 
         print("Create a generator for replicability.")
-        generator = torch.Generator().manual_seed(start_seed+i)
+        if(current_bootstrap):
+            generator = torch.Generator().manual_seed(start_seed+current_bootstrap)
+        else:
+            generator = torch.Generator().manual_seed(start_seed+i)
 
         # generate a unique training subset.
         print("generate a unique training subset..")
