@@ -8,6 +8,7 @@ from cnnMCSE.experiments.sampling import sampling_helper
 from cnnMCSE.experiments.complexity import complexity_helper
 from cnnMCSE.experiments.labels import labels_helper
 from cnnMCSE.mimic.cxr import mimic_helper
+from cnnMCSE.mimic.nih import nih_helper
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -213,6 +214,9 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
     
     elif(experiment == "MIMIC"):
         return mimic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+    
+    elif(experiment == "NIH"):
+        return nih_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
 
     else:
         return None

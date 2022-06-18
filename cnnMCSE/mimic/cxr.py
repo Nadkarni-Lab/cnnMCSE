@@ -57,7 +57,7 @@ def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
     return labels_df
 
 
-def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurances:str=None):
+def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurances:str=None, genders:str=None, age_range:str=None):
     
     # read in the records
     cxr_record_df = pd.read_csv(record_list)
@@ -68,11 +68,19 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     labels = labels.split(",")
     orientations = orientations.split(",")
     if(insurances): insurances = insurances.split(",")
+    if(genders): genders = genders.split(",")
+    if(age_range): age_range = age_range.split(",")
 
     # create outpath:
     out_config = demographics + labels + orientations
     if(insurances):
         out_config = out_config + insurances
+    
+    if(genders):
+        out_config = out_config + genders
+    
+    if(age_range):
+        out_config = out_config + age_range
 
     out_metadata_filename = '_'.join(out_config)
     out_metadata_filename = out_metadata_filename + '.tsv'
@@ -101,13 +109,31 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
         cxr_record_df['ethnicity'].isin(demographics)
     ]
 
+    # select relevant Insurance status. 
     if(insurances):
         cxr_record_df = cxr_record_df[
             cxr_record_df['insurance'].isin(insurances)
         ]
         print("Length", len(cxr_record_df))
-
-
+    
+    # select relevant genders
+    if(genders):
+        mimic_pt_df = pd.read_csv(mimic_pt_path)
+        genders_df = mimic_pt_df[['subject_id', 'gender']].drop_duplicates()
+        cxr_record_df = pd.merge(cxr_record_df, genders_df)
+        cxr_record_df = cxr_record_df[
+            cxr_record_df['gender'].isin(genders)
+        ]
+    
+    # Select relevant ages. 
+    if(age_range):
+        mimic_pt_df = pd.read_csv(mimic_pt_path)
+        age_df = mimic_pt_df[['subject_id', 'anchor_age']].drop_duplicates()
+        cxr_record_df = pd.merge(cxr_record_df, age_df)
+        age_range = [int(age) for age in age_range]
+        cxr_record_df = cxr_record_df[
+            cxr_record_df['anchor_age'].between(age_range)
+        ]
 
     # select relevant labels. 
     labels_df = pd.read_csv(chexpert)
@@ -241,6 +267,41 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
             insurances='Other'
         )
         return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if(dataset == "gender"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            genders="F"
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            genders="M"
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if(dataset == "age"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            age_range="20,40"
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            age_range="40,60"
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+
 
 
 
