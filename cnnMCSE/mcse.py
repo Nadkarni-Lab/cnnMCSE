@@ -17,6 +17,7 @@ from scipy.interpolate import UnivariateSpline
 from cnnMCSE.models import FCN, A3
 from cnnMCSE.metrics import metric_helper
 from cnnMCSE.utils.zoo import transfer_helper
+from cnnMCSE.dataloader import weighted_sampler
 
 
 BATCH_SIZE = 4
@@ -39,7 +40,8 @@ def get_estimators(
     frequency:bool=False,
     stratified:bool=False,
     n_epochs:int=1,
-    current_bootstrap:int=None):
+    current_bootstrap:int=None,
+    sampler_mode:str=None):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -98,6 +100,19 @@ def get_estimators(
                                               shuffle=shuffle,
                                               num_workers=num_workers,
                                               pin_memory=True)
+        if(sampler_mode):
+            train_sampler = weighted_sampler(
+                dataset=train_subset,
+                mode=sampler_mode
+            )
+            trainloader = torch.utils.data.DataLoader(train_subset,
+                                              batch_size=batch_size,
+                                              shuffle=shuffle,
+                                              num_workers=num_workers,
+                                              pin_memory=True,
+                                              sampler=train_sampler)
+
+
         # Initialize current model. 
         print(f"Initialize current model. {initial_weights}")
         if(zoo_model): 
@@ -258,7 +273,8 @@ def get_estimands(
     num_workers:int=1,
     zoo_model:str=None,
     n_epochs:int=1,
-    current_bootstrap:int=None
+    current_bootstrap:int=None,
+    sampler_mode:str=None
     ):
     """Method to generate estimands. 
 
@@ -314,6 +330,19 @@ def get_estimands(
                                               shuffle=shuffle,
                                               num_workers=num_workers,
                                               pin_memory=True)
+        if(sampler_mode):
+            train_sampler = weighted_sampler(
+                dataset=train_subset,
+                mode=sampler_mode
+            )
+            trainloader = torch.utils.data.DataLoader(train_subset,
+                                              batch_size=batch_size,
+                                              shuffle=shuffle,
+                                              num_workers=num_workers,
+                                              pin_memory=True,
+                                              sampler=train_sampler)
+
+
         # Initialize current model. 
         print("Initialize current model. ")
         if(zoo_model): 

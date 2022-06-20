@@ -2,9 +2,10 @@
 """
 import torch
 import torchvision
+import numpy as np
 
 from torchvision import transforms
-from torch.utils.data import random_split
+from torch.utils.data import random_split, WeightedRandomSampler
 
 def mnist_dataset(root_dir:str, tl_transforms:bool=False):
     """MNIST dataset. 
@@ -243,6 +244,41 @@ def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int,
     trainset, testset = random_split(dataset, [train_test_split, 1 - train_test_split], generator=torch.Generator().manual_seed(42))
 
     return trainset, testset
+
+def weighted_sampler(dataset, mode:str):
+    label_map = {
+        0 : ["None", 1], ,
+        1 : ["Pneumonia", 1],
+        2 : ["Pneumothorax", 2],
+        3 : ["Atelectasis", 0.5],
+        4 : ["Cardiomegaly", 0.5],
+        5 : ["Consolidation", 2],
+        6 : ["Edema", 1],
+        7 : ["Enlarged CM", 2],
+        8 : ["Opacity", 0.5],
+        9 : ["Effusion", 0.5]
+    }
+
+    if(mode == "frequency"):
+        y_train_indices = dataset.indices
+        y_train = [dataset.targets[i] for i in y_train_indices]
+        class_sample_count = np.array(
+            [len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
+        weight = 1. / class_sample_count
+        samples_weight = np.array([weight[t] for t in y_train])
+        samples_weight = torch.from_numpy(samples_weight)
+
+    if(mode == "mcse"):
+        y_train_indices = dataset.indices
+        y_train = [dataset.targets[i] for i in y_train_indices]
+        samples_weight = np.array([label_map[t][1] for t in y_train])
+        samples_weight = torch.from_numpy(samples_weight)
+
+    return WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
+
+
+
+
 
 def dataloader_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "MNIST"):

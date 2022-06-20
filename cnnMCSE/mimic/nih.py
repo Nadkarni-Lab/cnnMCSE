@@ -2,13 +2,18 @@ import os
 import pandas as pd
 import torch
 
+from torch.utils.data import Dataset, random_split, ConcatDataset
+from torchvision import transforms
+
+from os.path import exists
+from PIL import Image
+
 working_dir = '/sc/arion/projects/mscic1/data/nih-cxr'
 data_entry = os.path.join(working_dir, 'Data_Entry_2017.csv')
 bbox = os.path.join(working_dir, 'BBox_List_2017.csv')
 
 def label_encoding(labels_df:pd.DataFrame, all_labels:list, include_opacity:bool=True)->pd.DataFrame:
-    """_summary_
-
+    """A function for label encoding. 
     Args:
         labels_df (pd.DataFrame): DataFrame where to generate labels
         all_labels (list): List of relevant labels. 
@@ -81,7 +86,7 @@ def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range
     if(age_range):
         age_range = [int(age) for age in age_range]
         data_df = data_df[
-            data_df['Patient Age'].between(age_range*)
+            data_df['Patient Age'].between(age_range[0], age_range)
         ]
     
     # Add file paths.

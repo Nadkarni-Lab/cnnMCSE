@@ -18,4 +18,4 @@ cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_3/a
 
-python figure-4a-merge.py --input_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/a/data --output_file /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure4/a/tl_data_50.tsv
+python figure-4b-merge.py --input_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b/data --output_file /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/figure4/b/tl_data_50.tsv
