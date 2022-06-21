@@ -217,6 +217,9 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
     
     elif(experiment == "NIH"):
         return nih_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+    
+    elif(experiment == "CHEXPERT"):
+        return 
 
     else:
         return None

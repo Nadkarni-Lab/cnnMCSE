@@ -356,7 +356,8 @@ def batch_loop(
     metric_type:str="AUC",
     frequency:bool=False,
     stratified:bool=False,
-    experiment:str=None
+    experiment:str=None,
+    sampler_mode:str=None
     ):
 
     print("Running current bootstrap ", current_bootstrap)
@@ -420,7 +421,8 @@ def batch_loop(
                         zoo_model=zoo_model,
                         frequency=frequency,
                         stratified=stratified,
-                        current_bootstrap=current_bootstrap
+                        current_bootstrap=current_bootstrap,
+                        sampler_mode=sampler_mode
                     )
                     
 
@@ -437,7 +439,8 @@ def batch_loop(
                         initial_weights=initial_estimand_weights_path,
                         num_workers=num_workers,
                         zoo_model=zoo_model,
-                        current_bootstrap=current_bootstrap
+                        current_bootstrap=current_bootstrap,
+                        sampler_mode=sampler_mode
                     )
 
                     #--- Logging block. 

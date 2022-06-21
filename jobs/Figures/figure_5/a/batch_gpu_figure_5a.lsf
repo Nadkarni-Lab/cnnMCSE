@@ -1,5 +1,5 @@
 
-#BSUB -J "MIMIC_TL_batch_age[2-25]"
+#BSUB -J "MIMIC_TL_batch_gender[25-50]"
 #BSUB -P acc_EHR_ML 
 #BSUB -q gpu 
 #BSUB -n 4
@@ -7,8 +7,8 @@
 #BSUB -R rusage[mem=16000]
 #BSUB -R rusage[ngpus_excl_p=1]
 #BSUB -R span[hosts=1]
-#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b/batch_logs/%J.%I.stdout 
-#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b/batch_logs/%J.%I.stderr 
+#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_5/a/batch_logs/%J.%I.stdout 
+#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_5/a/batch_logs/%J.%I.stderr 
 #BSUB -L /bin/bash 
 
 ml purge
@@ -18,19 +18,19 @@ export PYTHONPATH=/hpc/packages/minerva-centos7/python/3.8.2/lib/python3.8/site-
 
 cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
 source bin/activate
-cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_5/a
 
 echo "$LSB_JOBINDEX"
 export CURRENT_BOOTSTRAP="$LSB_JOBINDEX"
 echo "%I"
 
 
-python figure-4b-batch.py --datasets age --metric_type sAUC --experiment MIMIC \
+python figure-5a-batch.py --datasets test --metric_type sAUC --experiment NIH \
     --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \
     --current_bootstrap "$LSB_JOBINDEX" \
     --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 50000 --frequency --stratified \
     --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_3/a/weights \
-    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b/data/tl_data_v2_"$LSB_JOBINDEX".tsv \
-    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_4/b/data/tl_metadata_v2_"$LSB_JOBINDEX".tsv
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_5/a/data/tl_data_v2_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_5/a/data/tl_metadata_v2_"$LSB_JOBINDEX".tsv

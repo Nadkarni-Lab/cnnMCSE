@@ -73,9 +73,6 @@ if __name__ == "__main__":
     parser.add_argument("--experiment", required=True, type=str, 
                         help="Experiment to run for bias detection.")
 
-    parser.add_argument("--sampler_mode", required=False, default=None, type=str, 
-                        help="Adding a non-random sampler.")
-
     #current_bootstrap = os.environ['CURRENT_BOOTSTRAP']
     config_kwargs = parser.parse_args()
     print('Current bootstrap', config_kwargs.current_bootstrap)

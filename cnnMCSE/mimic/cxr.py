@@ -131,8 +131,9 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
         age_df = mimic_pt_df[['subject_id', 'anchor_age']].drop_duplicates()
         cxr_record_df = pd.merge(cxr_record_df, age_df)
         age_range = [int(age) for age in age_range]
+        min_age, max_age = age_range
         cxr_record_df = cxr_record_df[
-            cxr_record_df['anchor_age'].between(age_range)
+            cxr_record_df['anchor_age'].between(left=min_age, right=max_age, inclusive="both")
         ]
 
     # select relevant labels. 

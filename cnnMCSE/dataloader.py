@@ -247,7 +247,7 @@ def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int,
 
 def weighted_sampler(dataset, mode:str):
     label_map = {
-        0 : ["None", 1], ,
+        0 : ["None", 1], 
         1 : ["Pneumonia", 1],
         2 : ["Pneumothorax", 2],
         3 : ["Atelectasis", 0.5],
