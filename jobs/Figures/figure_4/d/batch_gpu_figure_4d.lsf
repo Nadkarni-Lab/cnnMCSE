@@ -1,5 +1,5 @@
 
-#BSUB -J "MIMIC_TL_batch_gender[2-25]"
+#BSUB -J "MIMIC_TL_batch_mcse[50]"
 #BSUB -P acc_EHR_ML 
 #BSUB -q gpu 
 #BSUB -n 4
@@ -25,7 +25,7 @@ export CURRENT_BOOTSTRAP="$LSB_JOBINDEX"
 echo "%I"
 
 
-python figure-4c-batch.py --datasets test --metric_type sAUC --experiment MIMIC \
+python figure-4d-batch.py --datasets test --metric_type sAUC --experiment MIMIC \
     --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \

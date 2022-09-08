@@ -5,7 +5,8 @@ import torchvision
 import numpy as np
 
 from torchvision import transforms
-from torch.utils.data import random_split, WeightedRandomSampler
+from torch.utils.data import random_split, WeightedRandomSampler, TensorDataset
+from sklearn.datasets import make_classification
 
 def mnist_dataset(root_dir:str, tl_transforms:bool=False):
     """MNIST dataset. 
@@ -223,7 +224,7 @@ def fake_dataset(root_dir:str, tl_transforms:bool=False):
 
     return trainset, testset
 
-def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int, n_classes: int, train_test_split:float, seed:int=42):
+def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int, n_classes: int, train_test_split:int, seed:int=42):
     """Generate a synthetic dataset. 
 
     Args:
@@ -237,15 +238,28 @@ def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int,
     Returns:
         trainset, testset: Training and testing dataset. 
     """
+    print('max_sample_size', max_sample_size)
+    print('n_informative', n_informative)
+    print('n_features', n_features)
+    print('n_classes', n_classes)
+
     sample_dataset = make_classification(n_samples=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes)
     tensor_x = torch.Tensor(sample_dataset[0]) 
     tensor_y = torch.LongTensor(sample_dataset[1]) 
     dataset = TensorDataset(tensor_x,tensor_y) 
-    trainset, testset = random_split(dataset, [train_test_split, 1 - train_test_split], generator=torch.Generator().manual_seed(42))
+    trainset, testset = random_split(dataset, [train_test_split, max_sample_size - train_test_split], generator=torch.Generator().manual_seed(42))
 
     return trainset, testset
 
-def weighted_sampler(dataset, mode:str):
+def get_labels(subset):
+    labels = list()
+    for index, (X, y) in enumerate(subset):
+        labels.append(y)
+    
+    return labels
+
+
+def weighted_sampler(subset, mode:str):
     label_map = {
         0 : ["None", 1], 
         1 : ["Pneumonia", 1],
@@ -260,19 +274,39 @@ def weighted_sampler(dataset, mode:str):
     }
 
     if(mode == "frequency"):
-        y_train_indices = dataset.indices
-        y_train = [dataset.targets[i] for i in y_train_indices]
+        #y_train_indices = subset.indices
+        #all_dataset = subset.dataset
+
+        y_train = get_labels(subset)
+        print(y_train)
+        unique_labels = np.unique(y_train)
         class_sample_count = np.array(
-            [len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
-        weight = 1. / class_sample_count
-        samples_weight = np.array([weight[t] for t in y_train])
+            [len(np.where(y_train == t)[0]) for t in unique_labels])
+        print(class_sample_count)
+        weights = 1. / class_sample_count
+        weight_dict = {unique_label : weight for unique_label, weight in zip(unique_labels, weights)}
+        print(weight_dict)
+        samples_weight = np.array([weight_dict[t] for t in y_train])
+        print(samples_weight)
         samples_weight = torch.from_numpy(samples_weight)
 
     if(mode == "mcse"):
-        y_train_indices = dataset.indices
-        y_train = [dataset.targets[i] for i in y_train_indices]
+        #y_train_indices = subset.indices
+        y_train = get_labels(subset)
         samples_weight = np.array([label_map[t][1] for t in y_train])
         samples_weight = torch.from_numpy(samples_weight)
+    
+    if(mode == "joint"):
+        y_train = get_labels(subset)
+        unique_labels = np.unique(y_train)
+        class_sample_count = np.array(
+            [len(np.where(y_train == t)[0]) for t in unique_labels])
+        print(class_sample_count)
+        weights = 1. / class_sample_count
+        weight_dict = {unique_label : weight for unique_label, weight in zip(unique_labels, weights)}
+        samples_weight = np.array([label_map[t][1] * weight_dict[t]  for t in y_train])
+        samples_weight = torch.from_numpy(samples_weight)
+
 
     return WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
 
@@ -304,6 +338,16 @@ def dataloader_helper(dataset, root_dir, tl_transforms:bool=False):
     
     elif(dataset == "FAKE"):
         return fake_dataset(root_dir, tl_transforms=tl_transforms)
+    
+    elif("synthetic" in dataset):
+        args = dataset.split(",")
+        max_sample_size = int(args[1])
+        n_informative = int(args[2])
+        n_features = int(args[3]) 
+        n_classes = int(args[4])
+        train_test_split = 5000 / max_sample_size
+
+        return synthetic_dataset
     
     else:
         return None

@@ -31,7 +31,8 @@ def label_encoding(labels_df:pd.DataFrame, all_labels:list, include_opacity:bool
 
     target = list()
     target_map = list()
-    for index, row in data_df.iterrows():
+    labels_df['split_labels'] = labels_df['Finding Labels'].str.split("|")
+    for index, row in labels_df.iterrows():
         current_target = len(all_labels) + 2
         current_label = "Other"
         labels_list = row['split_labels']
@@ -46,11 +47,16 @@ def label_encoding(labels_df:pd.DataFrame, all_labels:list, include_opacity:bool
                     current_label = "Lung Opacity"
         target.append(current_target)
         target_map.append(current_label)
-    data_df['target'] = target
-    data_df['target_map'] = target_map
+    labels_df['target'] = target
+    labels_df['target_map'] = target_map
+    labels_df = labels_df[
+        labels_df['target_map'] != "Other"
+    ]
+
+    return labels_df
 
 
-def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range:str=None, orientations:str=None):
+def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range:str=None, orientations:str=None, include_opacity:bool=True):
 
     # Initialize out config file. 
     out_config = ["NIH"]
@@ -73,7 +79,7 @@ def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range
     
 
     data_df = label_encoding(
-        labels_df=data_df, all_labels=all_labels, include_opacity=include_opacity
+        labels_df=data_df, all_labels=labels, include_opacity=include_opacity
     )
 
     # Add genders. 
@@ -85,8 +91,10 @@ def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range
     # Add age range. 
     if(age_range):
         age_range = [int(age) for age in age_range]
+        min_age, max_age = age_range
+
         data_df = data_df[
-            data_df['Patient Age'].between(age_range[0], age_range)
+            data_df['Patient Age'].between(min_age, max_age)
         ]
     
     # Add file paths.
@@ -108,11 +116,15 @@ def generate_metadata_file(root_dir:str, labels:str, genders:str=None, age_range
         'path' : image_paths
     })
 
+    print(data_df)
+    print(path_df)
+
     # Output file. 
     output_df = pd.merge(data_df, path_df, on = "Image Index")
     out_config = "_".join(out_config)
     output_path = os.path.join(root_dir, out_config) + ".tsv"
-    output_df.to_csv(output_path, sep="\t", index=False)
+    if(exists(output_path) == False): 
+        output_df.to_csv(output_path, sep="\t", index=False)
 
     return output_path
 
@@ -193,6 +205,7 @@ def generate_dataloaders(
 def nih_helper(dataset, root_dir, tl_transforms:bool=True):
     if(dataset == "test"):
         metadata_path = generate_metadata_file(
+            root_dir=root_dir,
             labels='No Finding,Cardiomegaly,Pneumothorax,Effusion,Edema,Consolidation,Atelectasis,Pneumonia,Consolidation',
             include_opacity=True
         )
@@ -200,26 +213,30 @@ def nih_helper(dataset, root_dir, tl_transforms:bool=True):
     
     if(dataset == "gender"):
         metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir,
             labels='No Finding,Cardiomegaly,Pneumothorax,Effusion,Edema,Consolidation,Atelectasis,Pneumonia,Consolidation',
             include_opacity=True,
-            gender="F"
+            genders="F"
         )
 
         metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir,
             labels='No Finding,Cardiomegaly,Pneumothorax,Effusion,Edema,Consolidation,Atelectasis,Pneumonia,Consolidation',
             include_opacity=True,
-            gender="M"
+            genders="M"
         )
         return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
     
     if(dataset == "age"):
         metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir,
             labels='No Finding,Cardiomegaly,Pneumothorax,Effusion,Edema,Consolidation,Atelectasis,Pneumonia,Consolidation',
             include_opacity=True,
             age_range="20,40"
         )
 
         metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir,
             labels='No Finding,Cardiomegaly,Pneumothorax,Effusion,Edema,Consolidation,Atelectasis,Pneumonia,Consolidation',
             include_opacity=True,
             age_range="40,60"

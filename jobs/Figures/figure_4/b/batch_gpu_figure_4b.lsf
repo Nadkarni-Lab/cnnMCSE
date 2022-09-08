@@ -1,5 +1,5 @@
 
-#BSUB -J "MIMIC_TL_batch_age[2-25]"
+#BSUB -J "MIMIC_TL_batch_age[26-50]"
 #BSUB -P acc_EHR_ML 
 #BSUB -q gpu 
 #BSUB -n 4

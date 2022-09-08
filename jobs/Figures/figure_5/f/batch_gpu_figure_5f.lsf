@@ -1,8 +1,8 @@
 
-#BSUB -J "MIMIC_TL_batch_gender[25-50]"
+#BSUB -J "Chexpert_TL_batch_age[5-50]"
 #BSUB -P acc_EHR_ML 
-#BSUB -q gpu 
-#BSUB -n 4
+#BSUB -q private 
+#BSUB -n 1
 #BSUB -W 144:00 
 #BSUB -R rusage[mem=16000]
 #BSUB -R rusage[ngpus_excl_p=1]
@@ -25,7 +25,7 @@ export CURRENT_BOOTSTRAP="$LSB_JOBINDEX"
 echo "%I"
 
 
-python figure-5e-batch.py --datasets gender --metric_type sAUC --experiment CHEXPERT \
+python figure-5f-batch.py --datasets age --metric_type sAUC --experiment CHEXPERT \
     --models tlAE2,tlFCN2 \
     --zoo_models alexnet \
     --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  \

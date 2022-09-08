@@ -1,5 +1,5 @@
 
-#BSUB -J "MIMIC_TL_batch_gender[25-50]"
+#BSUB -J "CheXPert_TL_batch_test[2-50]"
 #BSUB -P acc_EHR_ML 
 #BSUB -q gpu 
 #BSUB -n 4

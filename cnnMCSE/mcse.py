@@ -102,12 +102,11 @@ def get_estimators(
                                               pin_memory=True)
         if(sampler_mode):
             train_sampler = weighted_sampler(
-                dataset=train_subset,
+                subset=train_subset,
                 mode=sampler_mode
             )
             trainloader = torch.utils.data.DataLoader(train_subset,
                                               batch_size=batch_size,
-                                              shuffle=shuffle,
                                               num_workers=num_workers,
                                               pin_memory=True,
                                               sampler=train_sampler)
@@ -332,12 +331,11 @@ def get_estimands(
                                               pin_memory=True)
         if(sampler_mode):
             train_sampler = weighted_sampler(
-                dataset=train_subset,
+                subset=train_subset,
                 mode=sampler_mode
             )
             trainloader = torch.utils.data.DataLoader(train_subset,
                                               batch_size=batch_size,
-                                              shuffle=shuffle,
                                               num_workers=num_workers,
                                               pin_memory=True,
                                               sampler=train_sampler)

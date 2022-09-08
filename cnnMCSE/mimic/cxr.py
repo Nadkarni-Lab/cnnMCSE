@@ -315,6 +315,7 @@ class MimicCXRDataset(Dataset):
         self.metadata_df = pd.read_csv(metadata_path, sep="\t")
         self.transform = transform
         self.target_transform = target_transform
+        self.targets = list(self.metadata_df['target'])
     
     def __len__(self):
         return self.metadata_df.shape[0]

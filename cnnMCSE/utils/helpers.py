@@ -9,6 +9,8 @@ from cnnMCSE.experiments.complexity import complexity_helper
 from cnnMCSE.experiments.labels import labels_helper
 from cnnMCSE.mimic.cxr import mimic_helper
 from cnnMCSE.mimic.nih import nih_helper
+from cnnMCSE.mimic.chexpert import chexpert_helper
+from cnnMCSE.experiments.synthetic import synthetic_helper
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -175,8 +177,8 @@ def estimate_mcse(df:pd.DataFrame):
 def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
     sample_size_list = list()
 
-
-    if(absolute_scale == None):
+    print('Absolute scale', absolute_scale)
+    if(absolute_scale == False):
         current_sample_size = min_sample_size
         while current_sample_size < max_sample_size:
             sample_size_list.append(current_sample_size)
@@ -219,7 +221,10 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
         return nih_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
     
     elif(experiment == "CHEXPERT"):
-        return 
+        return chexpert_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+    
+    elif(experiment == "synthetic"):
+        return synthetic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
 
     else:
         return None
