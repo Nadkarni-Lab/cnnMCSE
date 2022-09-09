@@ -248,7 +248,7 @@ class TransferFeatures(nn.Module):
 
 
 
-def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Module:
+def model_helper(model:str, initial_weights_dir:str, input_size=None)->nn.Module:
     """Method to return torch model. 
 
     Args:
@@ -257,17 +257,30 @@ def model_helper(model:str, initial_weights_dir:str, input_size:int=1000)->nn.Mo
     Returns:
         nn.Module: Model to return. 
     """
-    if(model == "A3"):
+    if(model == "A3" and input_size == None):
         a3 = A3()
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(a3.state_dict(), initial_weights_path)
         return A3, initial_weights_path
     
-    elif(model == "FCN"):
+    elif(model == "FCN" and input_size == None):
         fcn = FCN()
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(fcn.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
+    
+    elif(model == "A3" and input_size):
+        a3 = A3()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(a3.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
+    
+    elif(model == "FCN" and input_size):
+        fcn = FCN()
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(fcn.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
+    
     
     elif(model == "cnnAE"):
         initial_model = cnnAE()
