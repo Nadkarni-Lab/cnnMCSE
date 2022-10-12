@@ -248,7 +248,7 @@ class TransferFeatures(nn.Module):
 
 
 
-def model_helper(model:str, initial_weights_dir:str, input_size=None)->nn.Module:
+def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size=None)->nn.Module:
     """Method to return torch model. 
 
     Args:
@@ -257,30 +257,47 @@ def model_helper(model:str, initial_weights_dir:str, input_size=None)->nn.Module
     Returns:
         nn.Module: Model to return. 
     """
-    if(model == "A3" and input_size == None):
+    if(model == "A3" and input_dim == None):
         a3 = A3()
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(a3.state_dict(), initial_weights_path)
         return A3, initial_weights_path
     
-    elif(model == "FCN" and input_size == None):
+    elif(model == "FCN" and input_dim == None):
         fcn = FCN()
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(fcn.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
     
-    elif(model == "A3" and input_size):
-        a3 = A3()
-        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+    elif(model == "A3" and input_dim != None and hidden_size == None):
+        a3 = A3(input_size=input_dim)
+        initial_weights_path = os.path.join(initial_weights_dir, model + str(input_dim) + '.pt')
         torch.save(a3.state_dict(), initial_weights_path)
         return A3, initial_weights_path
     
-    elif(model == "FCN" and input_size):
-        fcn = FCN()
-        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+    elif(model == "FCN" and input_dim  !=None and hidden_size == None):
+        fcn = FCN(input_size=input_dim)
+        initial_weights_path = os.path.join(initial_weights_dir, model + str(input_dim) + '.pt')
         torch.save(fcn.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
     
+
+    elif(model == "A3" and input_dim != None and hidden_size != None):
+        a3 = A3(input_size=input_dim, 
+        hidden_size_one=hidden_size, 
+        hidden_size_two = hidden_size, 
+        hidden_size_three= hidden_size)
+        initial_weights_path = os.path.join(initial_weights_dir, model + str(input_dim) + str(hidden_size) + '.pt')
+        torch.save(a3.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
+    
+    elif(model == "FCN" and input_dim  !=None and hidden_size != None):
+        fcn = FCN(input_size=input_dim, hidden_size_one=hidden_size, 
+        hidden_size_two = hidden_size, 
+        hidden_size_three= hidden_size)
+        initial_weights_path = os.path.join(initial_weights_dir, model  + str(input_dim) + str(hidden_size) +  '.pt')
+        torch.save(fcn.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
     
     elif(model == "cnnAE"):
         initial_model = cnnAE()

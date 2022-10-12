@@ -189,7 +189,8 @@ def experiment_loop(
     metric_type:str="AUC",
     frequency:bool=False,
     stratified:bool=False,
-    experiment:str=None
+    experiment:str=None,
+    input_dim:int=None
     ):
 
     # initialize datasets
@@ -248,7 +249,7 @@ def experiment_loop(
                         start_seed = start_seed,
                         shuffle = shuffle,
                         initial_weights=initial_estimator_weights_path,
-                        num_workers=num_workers, 
+                        num_workers=n_workers, 
                         zoo_model=zoo_model,
                         frequency=frequency,
                         stratified=stratified
@@ -266,7 +267,7 @@ def experiment_loop(
                         shuffle=shuffle,
                         metric_type=metric_type,
                         initial_weights=initial_estimand_weights_path,
-                        num_workers=num_workers,
+                        num_workers=n_workers,
                         zoo_model=zoo_model
                     )
 
@@ -346,6 +347,7 @@ def batch_loop(
     n_bootstraps:int,
     initial_weights_dir:str, 
     out_data_path:str,
+    out_prediction_path:str,
     current_bootstrap:int=None,
     state_dict_dir:str=None,
     out_metadata_path:str=None, 
@@ -357,8 +359,9 @@ def batch_loop(
     frequency:bool=False,
     stratified:bool=False,
     experiment:str=None,
-    sampler_mode:str=None
-    ):
+    sampler_mode:str=None,
+    input_dim:int=None,
+    hidden_size:int=None):
 
     print("Running current bootstrap ", current_bootstrap)
     # initialize datasets
@@ -369,8 +372,8 @@ def batch_loop(
     models = models.split(",") 
     print(f"Testing models... {models}")
     estimator, estimand = models
-    estimator, initial_estimator_weights_path = model_helper(model=estimator, initial_weights_dir=initial_weights_dir)
-    estimand, initial_estimand_weights_path = model_helper(model=estimand, initial_weights_dir=initial_weights_dir)
+    estimator, initial_estimator_weights_path = model_helper(model=estimator, input_dim=input_dim, hidden_size=hidden_size, initial_weights_dir=initial_weights_dir)
+    estimand, initial_estimand_weights_path = model_helper(model=estimand, input_dim=input_dim, hidden_size=hidden_size, initial_weights_dir=initial_weights_dir)
 
     # initialize transfer learning zoo. 
     using_pretrained = (zoo_models != None)
@@ -384,10 +387,10 @@ def batch_loop(
 
 
     dfs = list()
-
+    preds_dfs = list()
     # initialize dataset dictionary
     for current_dataset in dataset_list:
-        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, tl_transforms=using_pretrained)
+        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, input_dim=input_dim, tl_transforms=using_pretrained)
         print(dataset_dict)
         #dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
 
@@ -422,12 +425,15 @@ def batch_loop(
                         frequency=frequency,
                         stratified=stratified,
                         current_bootstrap=current_bootstrap,
-                        sampler_mode=sampler_mode
+                        sampler_mode=sampler_mode,
+                        input_size=input_dim,
+                        hidden_size=hidden_size
                     )
                     
 
-                    estimands = get_estimands(
+                    estimands, preds_df = get_estimands(
                         model = estimand,
+                        input_size = input_dim,
                         training_data = dataset_dict[trainset],
                         validation_data = dataset_dict[testset],
                         sample_size = sample_size,
@@ -440,7 +446,9 @@ def batch_loop(
                         num_workers=num_workers,
                         zoo_model=zoo_model,
                         current_bootstrap=current_bootstrap,
-                        sampler_mode=sampler_mode
+                        sampler_mode=sampler_mode,
+                        hidden_size=hidden_size, 
+                        out_prediction_path=out_prediction_path
                     )
 
                     #--- Logging block. 
@@ -459,6 +467,15 @@ def batch_loop(
                     df_dict['trainset']     = [f'{trainset}' for i in range(n_bootstraps)]
                     df_dict['testset']      = [f'{testset}' for i in range(n_bootstraps)]
                     df_dict['dataset']      = [f'{trainset}_{testset}_{current_dataset}' for i in range(n_bootstraps)]
+
+                    preds_df['sample_size'] = sample_size
+                    preds_df['backend'] = str(zoo_model)
+                    preds_df['estimator'] = f'{estimator}'
+                    preds_df['estimand'] = f'{estimand}'
+                    preds_df['trainset'] = f'{trainset}'
+                    preds_df['testset'] = f'{testset}'
+                    preds_df['dataset'] = f'{trainset}_{testset}_{current_dataset}'
+
                     df = pd.DataFrame(df_dict)
                     print(df)
                     print(estimands)
@@ -474,10 +491,14 @@ def batch_loop(
                             df_merged = pd.concat([df, estimators], axis=1)
 
                     dfs.append(df_merged)
+                    preds_dfs.append(preds_df)
 
                     gc.collect()
     df = pd.concat(dfs)
     df.to_csv(out_data_path, sep="\t", index=False)
+
+    preds_df = pd.concat(preds_dfs)
+    preds_df.to_csv(out_prediction_path, sep="\t", index=False)
     
 
     ## Evaluating Models.

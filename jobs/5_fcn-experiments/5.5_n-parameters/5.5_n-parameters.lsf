@@ -1,0 +1,92 @@
+#BSUB -J "synthetic_parameters[1-50]"
+#BSUB -P acc_mscic1 
+#BSUB -q gpu 
+#BSUB -n 1
+#BSUB -W 140:00 
+#BSUB -R rusage[mem=16000]
+#BSUB -R rusage[ngpus_excl_p=1]
+#BSUB -R span[hosts=1]
+#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/batch_logs/%J.%I.stdout 
+#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/batch_logs/%J.%I.stderr 
+#BSUB -L /bin/bash 
+
+ml purge
+ml python/3.8.2
+echo $PYTHONPATH
+export PYTHONPATH=/hpc/packages/minerva-centos7/python/3.8.2/lib/python3.8/site-packages:/sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv/lib/python3.8/site-packages
+
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
+source bin/activate
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters
+
+echo "$LSB_JOBINDEX"
+export CURRENT_BOOTSTRAP="$LSB_JOBINDEX"
+echo "%I"
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 64 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_64_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_64_"$LSB_JOBINDEX".tsv 
+
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 128 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_128_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_128_"$LSB_JOBINDEX".tsv 
+
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 256 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_256_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_256_"$LSB_JOBINDEX".tsv 
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 512 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_512_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_512_"$LSB_JOBINDEX".tsv 
+
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 256 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_256_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_256_"$LSB_JOBINDEX".tsv 
+
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 784 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_784_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_784_"$LSB_JOBINDEX".tsv 
+
+
+python n-parameters.py --datasets features --metric_type sAUC \
+    --experiment synthetic \
+    --models A3,FCN --input_dim 784 --hidden_size 1024 \
+    --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data \
+    --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 0 --max_sample_size 5000  --frequency --stratified \
+    --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/weights \
+    --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_data_1024_"$LSB_JOBINDEX".tsv \
+    --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/5_fcn-experiments/5.5_n-parameters/data/fcn_metadata_1024_"$LSB_JOBINDEX".tsv 

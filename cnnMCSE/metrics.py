@@ -157,7 +157,6 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     roc_dict = {}
     for unique_label in unique_labels:
 
-        # Source of error is here
         print("Running unique label", unique_label)
         current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
         current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
@@ -271,6 +270,10 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
     print('Model Labels', len(model_labels))
     print('Model Predictions',len(model_predictions))
     print('Prediction probabilities', )
+    model_labels_torch = torch.Tensor(model_labels).reshape(probability_tensor.shape[0], 1)
+    print('Model labels shape', model_labels_torch.shape)
+    preds_df = torch.cat((torch.Tensor(model_labels_torch), probability_tensor), dim=1)
+    print('Preds df shape', preds_df.shape)
 
     roc_dfs = list()
     roc_dict = {}
@@ -305,9 +308,10 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
         roc_df = pd.DataFrame(roc_dict)
         roc_dfs.append(roc_df)
     
+    preds_df = pd.DataFrame(preds_df.detach().numpy())
     roc_df = pd.concat(roc_dfs)
     #print(roc_auc['micro'])
-    return roc_df 
+    return roc_df, preds_df 
 
 
 
@@ -336,7 +340,7 @@ def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
     
     return aucs
 
-def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
+def get_sAUCs(models:list, dataset, out_prediction_path:str, num_workers:int=0, zoo_model:str=None):
     """Get AUCs for a list of models. 
 
     Args:
@@ -352,17 +356,24 @@ def get_sAUCs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
                                             shuffle=False,
                                             num_workers=num_workers)
     sauc_dfs = list()
+    preds_dfs = list()
     for index, model in enumerate(models):
         print(f"Running model... {index} ")
         #sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
-        sauc_df = get_sAUC2(model=model, loader=loader, zoo_model=zoo_model)
+        sauc_df, preds_df = get_sAUC2(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df['estimands'] = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
+        
+        preds_df['bootstrap'] = index
         sauc_df['bootstrap'] = index
+        
         sauc_dfs.append(sauc_df)
+        preds_dfs.append(preds_df)
     
     sauc_df = pd.concat(sauc_dfs)
+    preds_dfs = pd.concat(preds_dfs)
+    # preds_dfs.to_csv(out_prediction_path, sep="\t", index=False)
     
-    return sauc_df
+    return sauc_df, preds_df
 
 def get_frequency(loader):
 
@@ -439,7 +450,8 @@ def metric_helper(models,
     num_workers:int=1, 
     zoo_model:str=None, 
     labels=None,
-    s_loss=None):
+    s_loss=None,
+    out_prediction_path=None):
     """Select which metric to use. 
 
     Args:
@@ -456,7 +468,7 @@ def metric_helper(models,
         return get_aucs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
     
     if(metric_type == "sAUC"):
-        return get_sAUCs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model)
+        return get_sAUCs(models=models, dataset=dataset, num_workers=num_workers, zoo_model=zoo_model, out_prediction_path=out_prediction_path)
     
     if(metric_type == "frequencies"):
         return get_frequencies(datasets=datasets, num_workers=num_workers, zoo_model=zoo_model)

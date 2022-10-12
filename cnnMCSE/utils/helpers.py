@@ -198,7 +198,7 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
     print(sample_size_list)
     return sample_size_list
 
-def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:bool=False):
+def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:bool=False, input_dim:int=None):
     print("Experiment", experiment)
     print("Dataset", dataset)
     print("Root-dir", root_dir)
@@ -224,7 +224,7 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
         return chexpert_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
     
     elif(experiment == "synthetic"):
-        return synthetic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+        return synthetic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms, input_dim=input_dim)
 
     else:
         return None

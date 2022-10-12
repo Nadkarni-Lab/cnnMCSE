@@ -224,7 +224,7 @@ def fake_dataset(root_dir:str, tl_transforms:bool=False):
 
     return trainset, testset
 
-def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int, n_classes: int, train_test_split:int, seed:int=42):
+def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int, n_classes: int, train_test_split:int, flip_y:float=0.1, seed:int=42):
     """Generate a synthetic dataset. 
 
     Args:
@@ -243,7 +243,7 @@ def synthetic_dataset(max_sample_size: int, n_informative: int, n_features: int,
     print('n_features', n_features)
     print('n_classes', n_classes)
 
-    sample_dataset = make_classification(n_samples=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes)
+    sample_dataset = make_classification(n_samples=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes, flip_y=flip_y)
     tensor_x = torch.Tensor(sample_dataset[0]) 
     tensor_y = torch.LongTensor(sample_dataset[1]) 
     dataset = TensorDataset(tensor_x,tensor_y) 

@@ -41,7 +41,9 @@ def get_estimators(
     stratified:bool=False,
     n_epochs:int=1,
     current_bootstrap:int=None,
-    sampler_mode:str=None):
+    sampler_mode:str=None,
+    input_size:int=None,
+    hidden_size:int=None):
     """Method to get estimators for convergence samples. 
 
     Args:
@@ -117,7 +119,13 @@ def get_estimators(
         if(zoo_model): 
             current_model = model(input_size=9216)
         else:
-            current_model = model()
+            if(input_size):
+                if(hidden_size == None):
+                    current_model = model(input_size=input_size)
+                else:
+                    current_model = model(input_size=input_size, hidden_size_one=hidden_size, hidden_size_two=hidden_size, hidden_size_three=hidden_size)
+            else:
+                current_model= model()
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
@@ -264,6 +272,7 @@ def get_estimands(
     validation_data,
     sample_size,
     initial_weights:str,
+    out_prediction_path:str,
     batch_size:int=1,
     bootstraps:int=1,
     start_seed:int=42,
@@ -273,15 +282,17 @@ def get_estimands(
     zoo_model:str=None,
     n_epochs:int=1,
     current_bootstrap:int=None,
-    sampler_mode:str=None
+    sampler_mode:str=None,
+    input_size:int=None,
+    hidden_size:int=None
     ):
     """Method to generate estimands. 
 
     Args:
-        model (_type_): nn.Module. 
-        training_data (_type_): Training data. 
-        validation_data (_type_): Validation data. 
-        sample_size (_type_): Sample size. 
+        model (nn.Module): Model to train data on. 
+        training_data (Dataset): Training data. 
+        validation_data (Dataset): Validation data. 
+        sample_size (int): Sample size. 
         initial_weights (str): Initial weights. 
         batch_size (int, optional): Batch size. Defaults to 4.
         bootstraps (int, optional): Number of bootstraps. Defaults to 1.
@@ -346,7 +357,13 @@ def get_estimands(
         if(zoo_model): 
             current_model = model(input_size=9216)
         else:
-            current_model = model()
+            if(input_size):
+                if(hidden_size == None):
+                    current_model = model(input_size=input_size)
+                else:
+                    current_model = model(input_size=input_size, hidden_size_one=hidden_size, hidden_size_two=hidden_size, hidden_size_three=hidden_size)
+            else:
+                current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
@@ -395,12 +412,13 @@ def get_estimands(
 
     print("Evaluating models... ")
     print(len(models))
-    metrics = metric_helper(
+    metrics, preds_df = metric_helper(
         models = models,
         dataset=validation_data,
         metric_type=metric_type,
         num_workers=num_workers,
-        zoo_model=zoo_model
+        zoo_model=zoo_model, 
+        out_prediction_path=out_prediction_path
     )
     gc.collect()
-    return metrics
+    return metrics, preds_df
