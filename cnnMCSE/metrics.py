@@ -271,8 +271,9 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
     print('Model Predictions',len(model_predictions))
     print('Prediction probabilities', )
     model_labels_torch = torch.Tensor(model_labels).reshape(probability_tensor.shape[0], 1)
+
     print('Model labels shape', model_labels_torch.shape)
-    preds_df = torch.cat((torch.Tensor(model_labels_torch), probability_tensor), dim=1)
+    preds_df = torch.cat(((model_labels_torch.to(device)), probability_tensor.to(device)), dim=1)
     print('Preds df shape', preds_df.shape)
 
     roc_dfs = list()
@@ -308,7 +309,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
         roc_df = pd.DataFrame(roc_dict)
         roc_dfs.append(roc_df)
     
-    preds_df = pd.DataFrame(preds_df.detach().numpy())
+    preds_df = pd.DataFrame(preds_df.cpu().detach().numpy())
     roc_df = pd.concat(roc_dfs)
     #print(roc_auc['micro'])
     return roc_df, preds_df 

@@ -76,11 +76,17 @@ class FCN(nn.Module):
     def forward(self, x):
         x = torch.flatten(x, start_dim=1)
         x = self.encoder(x)
+        x = F.log_softmax(x, dim=1)
         return x
 
     def forward_2(self, x):
         x = self.encoder(x)
         return x     
+    
+    def predict(self, x):
+        x = torch.flatten(x, start_dim = 1)
+        x = self.encoder(x)
+        x = F.softmax(x)
 
 
 class cnnAE(nn.Module):
