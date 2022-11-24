@@ -252,8 +252,8 @@ def get_estimands(
             # Forward + backward + optimize
             outputs = current_model(inputs)
 
-            print(outputs.shape)
-            print(labels.shape)
+            #print(outputs.shape)
+            #print(labels.shape)
 
             loss = criterion(outputs, labels)
             loss.backward()

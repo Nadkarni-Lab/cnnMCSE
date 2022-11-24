@@ -1,19 +1,27 @@
 import numpy as np
 import pandas as pd 
 import torch
-from torch.utils.data import Dataset, random_split, ConcatDataset, DataLoader
+
+from os.path import exists
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import Dataset, random_split, ConcatDataset, DataLoader
+
+
+from cnnMCSE.dissecting.util.features import *
+from cnnMCSE.dissecting.util.main import *
+from cnnMCSE.dissecting.util.model import *
+from cnnMCSE.dissecting.util.utils import *
 
 def label_encoding(y_df:pd.DataFrame, outcome:str, threshold:float):
     """Encode labels in a metadata file. 
 
     Args:
-        metadata_df (pd.DataFrame): _description_
+        metadata_df (pd.DataFrame): Metadata data frame generated synthetically. 
         outcome (str): Outcome value. 
         threshold (float): Threshold to classify. 
     """
-    y_df['target'] = (y_df[outcome] > y_df[outcome].quantile(q=threshold)).apply(float)
+    y_df['target'] = (y_df[outcome] > y_df[outcome].quantile(q=threshold)).apply(int)
     y_df['target_map'] = np.where(y_df['target'] == 1, 'high_risk', 'low_risk')
     return y_df
 
@@ -38,7 +46,6 @@ def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, ou
     # Get inputs and outputs. 
     metadata_df, x_column_names, Y_predictors = get_Y_x_df(metadata_df, verbose=True)
 
-    
     if(demographics):
         if(demographics == "white"):
             metadata_df = metadata_df[
@@ -67,34 +74,65 @@ def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, ou
 
     out_config.append(outcome)
     out_config.append(threshold)
+    out_config = [str(config) for config in out_config]
     
     out_metadata_filename = '_'.join(out_config)
     out_metadata_filename = out_metadata_filename + '.tsv'
     out_metadata_filename = out_metadata_filename.replace("/", "_")
-
-
-    out_metadata_filename = out_config + '.tsv'
     out_metadata_path = os.path.join(root_dir, out_metadata_filename)
 
     if(exists(out_metadata_path) == False): 
         metadata_df.to_csv(out_metadata_path, sep="\t", index=False)
     return out_metadata_path
 
-def generate_dataloaders(metadata_paths:list):
+def generate_dataloaders(metadata_paths:list, tags:list,  start_seed:float, split_ratio:float=0.7):
+    """Generate a set of dataloaders by metadta paths, tags, start seed and split ratios. 
 
+    Args:
+        metadata_paths (list): Path to list of experiments that need to run. 
+        tags (list): List of tags associated with each metadata file. 
+        start_seed (float): Start seed to ensure replicability.
+        split_ratio (float, optional): Train-test-split ratio. Defaults to 0.7.
+
+    Returns:
+        _type_: _description_
+    """
     # Generate seeds. 
-    generator_1 = torch.Generator().manual_seed(start_seed)
-    generator_2 = torch.Generator().manual_seed(start_seed+1)
-    metadata_path_1, metadata_path_2 = metadata_paths
+    generator = torch.Generator().manual_seed(start_seed)
+
+    # Initialize dataset dictionary
+    dataset_dict = {}
+    dataset_dict['train_test_match'] = list()
+
+    for path, tag in zip(metadata_paths, tags):
+        # Generate dataset
+        current_dataset     = DissectingDataset(metadata_path = path)
+
+        # Generate train-test-split ratio. 
+        len_current_dataset = len(current_dataset)
+        len_trainset        = int(len_current_dataset * split_ratio)
+        len_testset         = len_current_dataset - len_trainset
+        trainset, testset = random_split(current_dataset, [len_trainset, len_testset], generator=generator)
+
+        # Generate dataset_dict
+        dataset_dict[f'{tag}_train'] =  trainset
+        dataset_dict[f'{tag}_test'] =  testset
+        dataset_dict['train_test_match'].append([f'{tag}_train', f'{tag}_test'])
+    
+    return dataset_dict
+
 
 
 class DissectingDataset(Dataset):
-    """Class for Datasets for the Dissecting Dataset Bias Paper. 
+    """Dataset for Dissecting Datsaet bias
+
+    Args:
+        Dataset: Torch dataset type. 
     """
     def __init__(self, metadata_path, transform=None, target_transform=None):
         self.metadata_path = metadata_path
         self.metadata_df = pd.read_csv(metadata_path, sep="\t")
-        self.targets = list(self.metadata_df['target'])
+        self.targets = torch.from_numpy(np.array(self.metadata_df['target']))
         self.inputs = self.metadata_df.drop(['target'], axis=1)
         self.transform = transform
         self.target_transform = target_transform
@@ -104,7 +142,7 @@ class DissectingDataset(Dataset):
     
     def __getitem__(self, idx):
         predictors = torch.Tensor(self.inputs.iloc[idx])
-        outcomes = torch.Tensor([self.targets[idx]])
+        outcomes = self.targets[idx]
 
         if(self.transform):
             predictors = self.transform(predictors)
@@ -115,3 +153,95 @@ class DissectingDataset(Dataset):
         return predictors, outcomes
 
 
+def dissecting_helper(root_dir:str, dataset:str, start_seed:int):
+    if(dataset == "outcomes"):
+        metadata_path_cost = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'log_cost_t',
+            threshold=0.5
+        )
+
+        metadata_path_gagne = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'gagne_sum_t',
+            threshold=0.5
+        )
+
+        metadata_path_avoidable = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'log_cost_avoidable_t',
+            threshold=0.5
+        )
+        
+        # Create lists of metadata paths and tags. 
+        metadata_paths = [metadata_path_cost, metadata_path_gagne, metadata_path_avoidable]
+        tags = ['cost', 'gagne', 'avoidable']
+
+        return generate_dataloaders(metadata_paths=metadata_paths, tags=tags, start_seed=start_seed)
+    
+    if(dataset == "ethnicity"):
+        metadata_path_cost_white = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="white",
+            outcome = 'log_cost_t',
+            threshold=0.5
+        )
+
+        metadata_path_gagne_white = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="white",
+            outcome = 'gagne_sum_t',
+            threshold=0.5
+        )
+
+        metadata_path_avoidable_white = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="white",
+            outcome = 'log_cost_avoidable_t',
+            threshold=0.5
+        )
+
+        metadata_path_cost_black = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="black",
+            outcome = 'log_cost_t',
+            threshold=0.5
+        )
+
+        metadata_path_gagne_black = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="black",
+            outcome = 'gagne_sum_t',
+            threshold=0.5
+        )
+
+        metadata_path_avoidable_black = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics="black",
+            outcome = 'log_cost_avoidable_t',
+            threshold=0.5
+        )
+        
+        # Create lists of metadata paths and tags. 
+        metadata_paths = [
+            metadata_path_cost_white, metadata_path_gagne_white, metadata_path_avoidable_white,
+            metadata_path_cost_black, metadata_path_gagne_black, metadata_path_avoidable_black
+        ]
+        tags = [
+            'cost_white', 'gagne_white', 'avoidable_white',
+            'cost_black', 'gagne_black', 'avoidable_black'
+        ]
+
+        return generate_dataloaders(metadata_paths=metadata_paths, tags=tags, start_seed=start_seed)

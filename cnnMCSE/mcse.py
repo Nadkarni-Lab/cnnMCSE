@@ -160,8 +160,8 @@ def get_estimators(
         print(train_subset)
         for i in range(n_epochs):
             for j, data in enumerate(trainloader):
-                print("Testing data ", j)
-                print('Data', data)
+                #print("Testing data ", j)
+                #print('Data', data)
                 #print("Running batch" , i)
 
                 # Get data
@@ -176,12 +176,12 @@ def get_estimators(
                 optimizer_model.zero_grad()
 
                 # Forward + backward + optimize
-                print(inputs.shape)
+                # print(inputs.shape)
                 outputs = current_model(inputs)
-                print('Output shape', outputs.shape)
+                # print('Output shape', outputs.shape)
                 # Accomodate for intra-model flattening. 
                 inputs = inputs.reshape(outputs.shape)
-                print('Input shape', inputs.shape)
+                # print('Input shape', inputs.shape)
                 loss = criterion(outputs, inputs)
 
                 if(stratified and (i == n_epochs - 1)):
@@ -403,6 +403,7 @@ def get_estimands(
 
                 print(outputs.shape)
                 print(labels.shape)
+                print(labels)
 
                 loss = criterion(outputs, labels)
                 loss.backward()

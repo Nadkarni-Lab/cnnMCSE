@@ -86,8 +86,8 @@ class FCN(nn.Module):
     def predict(self, x):
         x = torch.flatten(x, start_dim = 1)
         x = self.encoder(x)
-        x = F.softmax(x)
-
+        x = F.softmax(x, dim=1)
+        return x
 
 class cnnAE(nn.Module):
     """Convolutional neural network autoencoder. 
@@ -131,11 +131,18 @@ class cnnFCN(nn.Module):
         x = self.pool(x)
         x = torch.flatten(x, start_dim=1)
         x = (self.linear(x))
+        x = F.log_softmax(x, dim=1)
         return x
-
-
-
-
+    
+    def predict(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = torch.flatten(x, start_dim=1)
+        x = (self.linear(x))
+        x = F.softmax(x, dim=1)
+        return x
 
 class AlexNetFCN(nn.Module):
     def __init__(self, input_dim:list = [3, 224,224], num_classes: int = 10) -> None:
@@ -170,6 +177,14 @@ class AlexNetFCN(nn.Module):
             nn.Linear(1000, num_classes)
         )
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        x = self.encoder(x)
+        return x
+    
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
         x = self.avgpool(x)

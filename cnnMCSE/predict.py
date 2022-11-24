@@ -219,7 +219,7 @@ def experiment_loop(
 
     # initialize dataset dictionary
     for current_dataset in dataset_list:
-        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, tl_transforms=using_pretrained)
+        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, tl_transforms=using_pretrained, start_seed=start_seed)
         print(dataset_dict)
         #dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
 
@@ -351,7 +351,7 @@ def batch_loop(
     current_bootstrap:int=None,
     state_dict_dir:str=None,
     out_metadata_path:str=None, 
-    start_seed:int = 42,
+    start_seed:str="42",
     shuffle:bool=False,
     num_workers:int=4,
     zoo_models:str=None,
@@ -362,6 +362,9 @@ def batch_loop(
     sampler_mode:str=None,
     input_dim:int=None,
     hidden_size:int=None):
+
+    print("Current start seed", start_seed)
+    start_seed = int(start_seed)
 
     print("Running current bootstrap ", current_bootstrap)
     # initialize datasets
@@ -390,7 +393,7 @@ def batch_loop(
     preds_dfs = list()
     # initialize dataset dictionary
     for current_dataset in dataset_list:
-        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, input_dim=input_dim, tl_transforms=using_pretrained)
+        dataset_dict = experiment_helper(experiment=experiment, dataset=current_dataset, root_dir=root_dir, input_dim=input_dim, tl_transforms=using_pretrained, start_seed=start_seed)
         print(dataset_dict)
         #dataset_dict = sampling_helper(dataset=current_dataset, root_dir=root_dir)
 

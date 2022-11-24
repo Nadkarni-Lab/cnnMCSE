@@ -129,7 +129,7 @@ def dim_synthetic(max_sample_size:int = 6000, n_informative:int=128, n_features:
 
     return dataset_dict
 
-def sampling_bias(max_sample_size:int = 6000, n_informative:int=512, n_features:int=784, n_classes:int=2):
+def sampling_bias(max_sample_size:int = 10000, n_informative:int=512, n_features:int=784, n_classes:int=10):
     """Method to generate a dataset with sampling bias. 
 
     Args:
@@ -143,13 +143,13 @@ def sampling_bias(max_sample_size:int = 6000, n_informative:int=512, n_features:
     """
     
     sampling_ratios = [0.01, 0.02, 0.05, 0.08, 0.10, 0.20, 0.30, 0.40, 0.50]
-
+    #sampling_ratios = [0.1, 0.5]
     dataset_dict = {}
     dataset_dict['train_test_match'] = list()
     for index, ratio in enumerate(sampling_ratios):
         print("n features ", n_features)
         # Generate and seed the data. 
-        trainset, testset = synthetic_dataset(max_sample_size=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes, train_test_split=5000, seed=index)
+        trainset, testset = synthetic_dataset(max_sample_size=max_sample_size, n_informative=n_informative, n_features=n_features, n_classes=n_classes, train_test_split=8000, seed=1, split_seed=index)
 
         # get a list of targets
         targets = get_labels(trainset)
@@ -163,7 +163,7 @@ def sampling_bias(max_sample_size:int = 6000, n_informative:int=512, n_features:
         num_false = len(targets) - num_true
 
         # subset the indices. 
-        #np.random.seed(index)
+        np.random.seed(index)
         subset_indices_true = np.random.choice(a = indices_true, size = num_true, replace=True)
         subset_indices_false = np.random.choice(a = indices_false, size = num_false, replace=True)
         subset_indices_total = list(subset_indices_true) + list(subset_indices_false)
@@ -179,6 +179,8 @@ def sampling_bias(max_sample_size:int = 6000, n_informative:int=512, n_features:
 
 
 
+def sampling_bias_v2(max_sample_size:int = 10000, n_informative:int=512, n_features:int=784, n_classes:int=10):
+    sampling_ratios = [0.01, 0.02, 0.05, 0.08, 0.10, 0.20, 0.30, 0.40, 0.50, 0.6, 0.8, 0.9, 0.99]
 
         
 

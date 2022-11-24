@@ -16,7 +16,7 @@ def bias_mnist(root_dir,
     sample_sizes:list=[50000, 10000], 
     tl_transforms:bool=False,
     start_seed:int=42):
-
+    print("Using start seed", start_seed)
     generator = torch.Generator().manual_seed(start_seed)
     mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
     fmnist_trainset, fmnist_testset = dataloader_helper(dataset='FMNIST', root_dir=root_dir, tl_transforms=tl_transforms)
@@ -61,7 +61,9 @@ def ratio_mnist(root_dir,
     tl_transforms:bool=False,
     start_seed:int=42):
 
+    print("Using start seed", start_seed)
     generator = torch.Generator().manual_seed(start_seed)
+
     mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
     CIFAR10_trainset, CIFAR10_testset = dataloader_helper(dataset='CIFAR10', root_dir=root_dir, tl_transforms=tl_transforms)
 
@@ -127,12 +129,12 @@ def ratio_mnist(root_dir,
     return dataset_dict
 
 
-def sampling_helper(root_dir, dataset, tl_transforms:bool=False):
+def sampling_helper(root_dir, dataset, start_seed:int, tl_transforms:bool=False):
 
     if(dataset == "MNIST"):
-        return bias_mnist(root_dir=root_dir, tl_transforms=tl_transforms)
+        return bias_mnist(root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     if(dataset == "MNIST_ratios"):
-        return ratio_mnist(root_dir=root_dir, tl_transforms=tl_transforms)
+        return ratio_mnist(root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     else:
         return None
 

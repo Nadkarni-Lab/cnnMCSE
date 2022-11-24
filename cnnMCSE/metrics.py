@@ -212,7 +212,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
         pretrained_model = None
 
     current_model = model
-    current_model = nn.DataParallel(current_model)
+    # current_model = nn.DataParallel(current_model)
     current_model.to(device)
     current_model.eval()
 
@@ -240,10 +240,9 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
             images = pretrained_model(images)
 
         # images, labels = images.to(DEVICE), labels.to(DEVICE)
-        output = current_model(images)
-        probs = torch.sigmoid(output)
-        print(output)
-        print(output.shape)
+        print('Current Model', current_model)
+        probs = current_model.module.predict(images)
+        # probs = torch.sigmoid(output)
         probability_tensor = torch.cat((probability_tensor, probs), dim=0)
         model_labels = model_labels + labels.tolist()
 
@@ -383,6 +382,7 @@ def get_frequency(loader):
         _, labels = data
         all_labels = all_labels + labels.tolist()
 
+    print(all_labels)
     unique_labels = list(set(all_labels))
 
     label_dfs = list()
@@ -426,11 +426,23 @@ def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
     return frq_df
 
 def get_sloss(labels:list, s_loss):
+    print('Labels', labels)
     s_loss_dict = {}
     with torch.no_grad():
         sample_mses = torch.mean(s_loss, dim=[i+1 for i in range(len(s_loss.shape)-1)])
         s_loss_dict = {}
         for label, sample_mse in zip(labels, sample_mses):
+            print("Label", label)
+            print("Labels", labels)
+            print("sample-mse", sample_mse)
+            print("Sample_mses", sample_mses)
+            print('Type', type(label))
+            #
+            if (isinstance(label, list) and len(label) == 1):
+                print("Length", len(label))
+                label = label[0]
+                print("Unpacked", label)
+                print("Sample MSE", sample_mse)
             if(label in s_loss_dict):
                 s_loss_dict[label].append(sample_mse.item())
             else:
