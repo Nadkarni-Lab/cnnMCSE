@@ -1,2 +1,0 @@
-import os
-os.system("python mnist-cnn-mcse.py --dataset MNIST --models A3,FCN --root_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/data --n_bootstraps 5 --shuffle --batch_size 1 --num_workers 0 --initial_weights_dir /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/1.0_mnist-cnn-mcse/weights --out_data_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/1.0_mnist-cnn-mcse/output/data.tsv --out_metadata_path /mnt/c/Users/faris/Documents/sinai/Research/Nadkarni/cnnMCSE/jobs/1.0_mnist-cnn-mcse/output/metadata.tsv")
