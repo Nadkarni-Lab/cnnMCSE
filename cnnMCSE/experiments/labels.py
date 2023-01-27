@@ -1,8 +1,9 @@
 """Experiments for label bias. 
 """
-from random import Random
+import random
 import torch
 import numpy as np
+from random import Random
 from torch.utils.data import TensorDataset, random_split, ConcatDataset, WeightedRandomSampler, Subset, RandomSampler
 
 from scipy.stats import poisson
@@ -198,9 +199,11 @@ def mislabeled_MNIST(root_dir:str,
     bias_means:list=[1, 10],
     num_samples:list=[10000,10000] ,
     clip_val:float=0.05,
-    start_seed:int=42):
+    start_seed:int=42,
+    incorrect_label:int=1):
     mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
     generator = torch.Generator().manual_seed(start_seed)
+    np.random.seed(start_seed)
     labels = mnist_trainset.targets
 
     mislabel = 1
@@ -209,21 +212,81 @@ def mislabeled_MNIST(root_dir:str,
     dataset_dict = {}
     dataset_dict['train_test_match'] = list()
     for percentage_mislabeled in percentage_mislabeled_list:
-        mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
-        correct_indices = [i for i in range(len(labels)) if i == mislabel]
-        incorrect_indices = [i for i in range(len(labels)) if i != mislabel]
-        num_incorrect = int(len(correct_indices) * percentage_mislabeled) + 1
-        print(num_incorrect)
-        class_I_indices = list(RandomSampler(data_source=incorrect_indices, replacement=True, num_samples=num_incorrect)) + correct_indices
-        adjusted_labels = list()
-        for index, label in enumerate(labels):
-            if index not in class_I_indices:
-                adjusted_labels.append(label)
-            else:
-                adjusted_labels.append(1)
         
-        mnist_trainset.targets = adjusted_labels
+        # Initialize Training Data. 
+        mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
+        
+        # Get Labels. 
+        labels_list = labels.tolist()
+        num_mislabeled = int(len(labels_list) * percentage_mislabeled)
+        set_labels = set(labels_list)
+        set_labels = list(set_labels)
+
+        all_index = [i for i in range(len(labels_list)) if labels_list[i] == incorrect_label]
+        num_mislabeled = int(len(all_index) * percentage_mislabeled)
+        incorrect_indices = np.random.choice(all_index, size=num_mislabeled, replace=False)
+        for incorrect_index in incorrect_indices:
+            current_label = labels_list[incorrect_index]
+            incorrect_labels = [set_label for set_label in set_labels if set_label != current_label]
+            new_label = np.random.choice(incorrect_labels, size=1, replace=False)[0]
+            labels_list[incorrect_index] = new_label
+        mnist_trainset.targets = torch.Tensor(labels_list)
         dataset_dict[f'trainset__{percentage_mislabeled}'] = mnist_trainset
+        dataset_dict[f'testset__{percentage_mislabeled}'] = mnist_testset
+        dataset_dict['train_test_match'].append(
+            [f'trainset__{percentage_mislabeled}',  f'testset__{percentage_mislabeled}']
+        )
+    
+    return dataset_dict
+
+def mislabeled_MNIST2(root_dir:str,
+    tl_transforms:bool=False,
+    bias_means:list=[1, 10],
+    num_samples:list=[10000,10000] ,
+    clip_val:float=0.05,
+    start_seed:int=42,
+    incorrect_label:int=1):
+
+    # Set seed. 
+    torch.manual_seed(start_seed)
+    np.random.seed(start_seed)
+
+    mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
+    fake_trainset, fake_testset = dataloader_helper(dataset='FAKE', root_dir=root_dir, tl_transforms=tl_transforms)
+    generator = torch.Generator().manual_seed(start_seed)
+    #np.random.seed(start_seed)
+    #labels = mnist_trainset.targets
+
+    mislabel = 1
+    percentage_mislabeled_list = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.8, 0.9, 0.95]
+
+    dataset_dict = {}
+    dataset_dict['train_test_match'] = list()
+    for percentage_mislabeled in percentage_mislabeled_list:
+        
+        # Initialize Training Data. 
+        mnist_trainset, mnist_testset = dataloader_helper(dataset='MNIST', root_dir=root_dir, tl_transforms=tl_transforms)
+        fake_trainset, fake_testset = dataloader_helper(dataset='FAKE', root_dir=root_dir, tl_transforms=tl_transforms)
+
+        #all_index = [i for i in range(len(labels_list)) if labels_list[i] == incorrect_label]
+        num_mislabeled = int(len(mnist_trainset) * percentage_mislabeled)
+        num_labeled = len(mnist_trainset) - num_mislabeled
+
+        if(num_labeled != 0): 
+            mnist_subset, _ = random_split(
+                mnist_trainset, 
+                lengths = [num_labeled, num_mislabeled], 
+                generator=generator
+            )
+        if(num_mislabeled != 0): 
+            fake_subset, _ = random_split(
+                fake_trainset, 
+                lengths = [num_mislabeled, num_labeled], 
+                generator=generator
+            )
+        joint_trainset = ConcatDataset([mnist_subset, fake_subset])
+       
+        dataset_dict[f'trainset__{percentage_mislabeled}'] = joint_trainset
         dataset_dict[f'testset__{percentage_mislabeled}'] = mnist_testset
         dataset_dict['train_test_match'].append(
             [f'trainset__{percentage_mislabeled}',  f'testset__{percentage_mislabeled}']
@@ -298,6 +361,8 @@ def labels_helper(root_dir, dataset, tl_transforms, start_seed):
         return labels_cifar10(root_dir=root_dir, tl_transforms=tl_transforms)
     elif(dataset == "misMNIST"):
         return mislabeled_MNIST(root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
+    elif(dataset == "misMNIST2"):
+        return mislabeled_MNIST2(root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     elif(dataset == "FMNIST"):
         return labels_fmnist(root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     else:

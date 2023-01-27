@@ -13,7 +13,7 @@ from cnnMCSE.dissecting.util.main import *
 from cnnMCSE.dissecting.util.model import *
 from cnnMCSE.dissecting.util.utils import *
 
-def label_encoding(y_df:pd.DataFrame, outcome:str, threshold:float):
+def label_encoding(y_df:pd.DataFrame, outcome:str, threshold:float=None, thresholds:list=None):
     """Encode labels in a metadata file. 
 
     Args:
@@ -21,12 +21,20 @@ def label_encoding(y_df:pd.DataFrame, outcome:str, threshold:float):
         outcome (str): Outcome value. 
         threshold (float): Threshold to classify. 
     """
-    y_df['target'] = (y_df[outcome] > y_df[outcome].quantile(q=threshold)).apply(int)
-    y_df['target_map'] = np.where(y_df['target'] == 1, 'high_risk', 'low_risk')
+    if(threshold):
+        y_df['target'] = (y_df[outcome] > y_df[outcome].quantile(q=threshold)).apply(int)
+        y_df['target_map'] = np.where(y_df['target'] == 1, 'high_risk', 'low_risk')
+    
+    if(thresholds):
+        y_df['target'] = 0
+        for index, threshold in enumerate(thresholds):
+            y_df.loc[(y_df[outcome] > y_df[outcome].quantile(q=threshold)), ['target']] = index 
+        y_df['target_map'] = np.where(y_df['target'] > 5, 'high_risk', 'low_risk')
+
     return y_df
 
 
-def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, outcome:str, threshold:float=0.5):
+def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, outcome:str, threshold:float=None, thresholds:list=None):
     """Generate a metadata file.
 
     Args:
@@ -65,7 +73,7 @@ def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, ou
 
     # Label encoding. 
     y_df = metadata_df[Y_predictors]
-    y_df = label_encoding(y_df, outcome, threshold)
+    y_df = label_encoding(y_df, outcome, threshold=threshold, thresholds=thresholds)
     y_df = y_df.drop(Y_predictors, axis=1)
 
     # Merge X and y dataframes. 
@@ -73,7 +81,12 @@ def generate_metadata_file(metadata_path:str, root_dir:str, demographics:str, ou
     metadata_df = X_df
 
     out_config.append(outcome)
-    out_config.append(threshold)
+    if(threshold):
+        out_config.append(threshold)
+    if(thresholds):
+        thresholds_str = [str(thresh) for thresh in thresholds]
+        thresholds_str = '_'.join(thresholds_str)
+        out_config.append(thresholds_str)
     out_config = [str(config) for config in out_config]
     
     out_metadata_filename = '_'.join(out_config)
@@ -243,5 +256,36 @@ def dissecting_helper(root_dir:str, dataset:str, start_seed:int):
             'cost_white', 'gagne_white', 'avoidable_white',
             'cost_black', 'gagne_black', 'avoidable_black'
         ]
+
+        return generate_dataloaders(metadata_paths=metadata_paths, tags=tags, start_seed=start_seed)
+    
+    if(dataset == "stratification"):
+        metadata_path_cost = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'log_cost_t',
+            thresholds=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        )
+
+        metadata_path_gagne = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'gagne_sum_t',
+            thresholds=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        )
+
+        metadata_path_avoidable = generate_metadata_file(
+            root_dir=root_dir, 
+            metadata_path= '/sc/arion/projects/EHR_ML/gulamf01/dissecting-bias/data/data_new.csv',
+            demographics=None,
+            outcome = 'log_cost_avoidable_t',
+            thresholds=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        )
+        
+        # Create lists of metadata paths and tags. 
+        metadata_paths = [metadata_path_cost, metadata_path_gagne, metadata_path_avoidable]
+        tags = ['cost', 'gagne', 'avoidable']
 
         return generate_dataloaders(metadata_paths=metadata_paths, tags=tags, start_seed=start_seed)

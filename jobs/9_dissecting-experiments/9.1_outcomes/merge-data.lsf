@@ -1,0 +1,23 @@
+#BSUB -J dissecting_outcomes_merge
+#BSUB -P acc_EHR_ML 
+#BSUB -q private 
+#BSUB -n 1
+#BSUB -W 4:00 
+#BSUB -R rusage[mem=16000]
+#BSUB -R span[hosts=1]
+#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/9_dissecting-experiments/9.1_outcomes/logs/%J.stdout 
+#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/9_dissecting-experiments/9.1_outcomes/logs/%J.stderr 
+#BSUB -L /bin/bash 
+
+ml purge
+ml python/3.8.2
+ml cuda
+ml cudnn
+echo $PYTHONPATH
+export PYTHONPATH=/hpc/packages/minerva-centos7/python/3.8.2/lib/python3.8/site-packages:/sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv/lib/python3.8/site-packages
+
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
+source bin/activate
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/9_dissecting-experiments/9.1_outcomes
+
+python merge-data.py --input_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/9_dissecting-experiments/9.1_outcomes/data --output_directory /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/output/9_dissecting-experiments/9.1_outcomes

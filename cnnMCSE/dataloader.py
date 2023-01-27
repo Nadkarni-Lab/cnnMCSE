@@ -323,6 +323,7 @@ def dataloader_helper(dataset, root_dir, tl_transforms:bool=False):
     if(dataset == "MNIST"):
         return mnist_dataset(root_dir, tl_transforms=tl_transforms)
     
+
     elif(dataset == "FMNIST"):
         return fmnist_dataset(root_dir, tl_transforms=tl_transforms)
 

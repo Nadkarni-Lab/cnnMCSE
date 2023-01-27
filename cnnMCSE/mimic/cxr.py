@@ -303,7 +303,73 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
         )
         return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
 
+    if(dataset == "intersection-ethnicity-gender"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            genders="M"
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            genders="F"
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if(dataset == "intersection-ethnicity-age"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            age_range="20,40"
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            age_range="60,80"
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if(dataset == "intersection-ethnicity-ses"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            insurances='Medicaid'
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='BLACK/AFRICAN AMERICAN',
+            orientations='postero-anterior',
+            insurances='Other'
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
 
+    if(dataset == "ses"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            insurances='Medicaid'
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior',
+            insurances='Other'
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
 
 
 class MimicCXRDataset(Dataset):

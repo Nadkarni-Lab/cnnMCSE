@@ -11,6 +11,7 @@ from cnnMCSE.mimic.cxr import mimic_helper
 from cnnMCSE.mimic.nih import nih_helper
 from cnnMCSE.mimic.chexpert import chexpert_helper
 from cnnMCSE.experiments.synthetic import synthetic_helper
+from cnnMCSE.dissecting.cost import dissecting_helper
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -198,13 +199,13 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
     print(sample_size_list)
     return sample_size_list
 
-def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:bool=False, input_dim:int=None):
+def experiment_helper(experiment:str, dataset:str, root_dir:str, start_seed:int, tl_transforms:bool=False, input_dim:int=None):
     print("Experiment", experiment)
     print("Dataset", dataset)
     print("Root-dir", root_dir)
     if(experiment == "sampling"):
         print("Getting sampling experiment.")
-        return sampling_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+        return sampling_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     
     elif(experiment == "complexity"):
         print("Getting complexity experiment.")
@@ -212,7 +213,7 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
 
     elif(experiment == "label"):
         print("Getting label bias experiment.")
-        return labels_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
+        return labels_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms, start_seed=start_seed)
     
     elif(experiment == "MIMIC"):
         return mimic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms)
@@ -225,6 +226,9 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, tl_transforms:b
     
     elif(experiment == "synthetic"):
         return synthetic_helper(dataset=dataset, root_dir=root_dir, tl_transforms=tl_transforms, input_dim=input_dim)
+
+    elif(experiment == "dissecting"):
+        return dissecting_helper(dataset=dataset, root_dir=root_dir, start_seed=start_seed)
 
     else:
         return None
