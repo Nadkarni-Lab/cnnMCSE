@@ -25,7 +25,7 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
 
     # Using device. 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    #print(f"Using device {device}")
 
     # Using PreTrained Model. 
     if(zoo_model):
@@ -382,7 +382,7 @@ def get_frequency(loader):
         _, labels = data
         all_labels = all_labels + labels.tolist()
 
-    print(all_labels)
+    # print(all_labels)
     unique_labels = list(set(all_labels))
 
     label_dfs = list()
@@ -417,7 +417,7 @@ def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
                                             batch_size=256,
                                             shuffle=False,
                                             num_workers=num_workers)
-        print(f"Running model... {index} ")
+        # print(f"Running model... {index} ")
         frq_df = get_frequency(loader=loader)
         frq_df['bootstrap'] = index
         frq_dfs.append(frq_df)
@@ -426,23 +426,23 @@ def get_frequencies(datasets, num_workers:int=0, zoo_model:str=None):
     return frq_df
 
 def get_sloss(labels:list, s_loss):
-    print('Labels', labels)
+    # print('Labels', labels)
     s_loss_dict = {}
     with torch.no_grad():
         sample_mses = torch.mean(s_loss, dim=[i+1 for i in range(len(s_loss.shape)-1)])
         s_loss_dict = {}
         for label, sample_mse in zip(labels, sample_mses):
-            print("Label", label)
-            print("Labels", labels)
-            print("sample-mse", sample_mse)
-            print("Sample_mses", sample_mses)
-            print('Type', type(label))
+            #print("Label", label)
+            #print("Labels", labels)
+            #print("sample-mse", sample_mse)
+            #print("Sample_mses", sample_mses)
+            #print('Type', type(label))
             #
             if (isinstance(label, list) and len(label) == 1):
-                print("Length", len(label))
+                #print("Length", len(label))
                 label = label[0]
-                print("Unpacked", label)
-                print("Sample MSE", sample_mse)
+                # print("Unpacked", label)
+                #print("Sample MSE", sample_mse)
             if(label in s_loss_dict):
                 s_loss_dict[label].append(sample_mse.item())
             else:

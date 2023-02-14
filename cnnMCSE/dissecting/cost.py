@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, random_split, ConcatDataset, DataLoader
 from cnnMCSE.dissecting.util.features import *
 from cnnMCSE.dissecting.util.main import *
 from cnnMCSE.dissecting.util.model import *
-from cnnMCSE.dissecting.util.utils import *
+from cnnMCSE.dissecting.util.util import *
 
 def label_encoding(y_df:pd.DataFrame, outcome:str, threshold:float=None, thresholds:list=None):
     """Encode labels in a metadata file. 

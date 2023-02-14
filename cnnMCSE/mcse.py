@@ -63,7 +63,7 @@ def get_estimators(
 
     # Determine which device is being used. 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    #print(f"Using device {device}")
 
     # Generate zoo models. 
     if(zoo_model):
@@ -76,27 +76,24 @@ def get_estimators(
     train_subsets = list()
     s_losses = {}
 
-    if(current_bootstrap):
-        bootstraps = 1
-
     for i in range(bootstraps):
-        print("Running loop ", i)
+        #print("Running loop ", i)
 
         # Create a generator for replicability. 
-        print("Generating generator")
+        #print("Generating generator")
         if(current_bootstrap):
             generator = torch.Generator().manual_seed(start_seed+current_bootstrap)
         else:
             generator = torch.Generator().manual_seed(start_seed+i)
 
         # generate a unique training subset.
-        print("Creating training subset")
+        #print("Creating training subset")
         train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
         train_subsets.append(train_subset)
         
 
         # Create a training dataloader. 
-        print("Create a training dataloader. ")
+       # print("Create a training dataloader. ")
         trainloader = torch.utils.data.DataLoader(train_subset,
                                               batch_size=batch_size,
                                               shuffle=shuffle,
@@ -115,7 +112,7 @@ def get_estimators(
 
 
         # Initialize current model. 
-        print(f"Initialize current model. {initial_weights}")
+        #print(f"Initialize current model. {initial_weights}")
         if(zoo_model): 
             current_model = model(input_size=9216)
         else:
@@ -129,16 +126,16 @@ def get_estimators(
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
-        print("Parallelize current model. ")
+        #print("Parallelize current model. ")
         current_model = nn.DataParallel(current_model)
         current_model.to(device)
 
         # Set model in training mode. 
-        print("Set model in training mode. ")
+        #print("Set model in training mode. ")
         current_model.train()
 
         # Generate mean-squared error loss criterion
-        print("Generate mean-squared error loss criterion.")
+        #print("Generate mean-squared error loss criterion.")
         if(stratified):
             s_criterion = nn.MSELoss(reduction='none')
             
@@ -147,7 +144,7 @@ def get_estimators(
         #   
 
         # Optimize model with stochastic gradient descent. 
-        print("Optimize model with stochastic gradient descent. ")
+        #print("Optimize model with stochastic gradient descent. ")
         optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
 
         # Set up training loop
@@ -155,9 +152,9 @@ def get_estimators(
         s_running_loss = dict()
         
         # iterate over training subset. 
-        print("Running dataset ")
-        print(trainloader)
-        print(train_subset)
+        #print("Running dataset ")
+        #print(trainloader)
+        #print(train_subset)
         for i in range(n_epochs):
             for j, data in enumerate(trainloader):
                 #print("Testing data ", j)
@@ -183,9 +180,12 @@ def get_estimators(
                 inputs = inputs.reshape(outputs.shape)
                 # print('Input shape', inputs.shape)
                 loss = criterion(outputs, inputs)
+                #print("Inputs", inputs)
+                #print("Outputs", outputs)
+                #print("Loss", loss)
 
                 if(stratified and (i == n_epochs - 1)):
-                    print("Running stratified loss...")
+                    #print("Running stratified loss...")
                     s_loss = s_criterion(outputs, inputs)
                     labels = labels.tolist()
                     s_loss_dict = metric_helper(metric_type="sloss", s_loss=s_loss, labels=labels, models=None)
@@ -195,7 +195,7 @@ def get_estimators(
 
                 running_loss += loss.item()
 
-                print("Adding losses to running losses...")
+                #print("Adding losses to running losses...")
                 if(i == n_epochs - 1):
                     for key, value in s_loss_dict.items():
                         if(key in s_running_loss):
@@ -227,14 +227,14 @@ def get_estimators(
         loss_df = loss_df.reset_index()
         loss_df['bootstrap'] = loss_df['index']
         frequency_df = metric_helper(models=None, metric_type="frequencies", datasets=train_subsets, num_workers=0)
-        print(frequency_df)
-        print(loss_df)
+        #print(frequency_df)
+        #print(loss_df)
         merged_df = frequency_df.merge(loss_df, on='bootstrap')
-        print(merged_df)
+        #print(merged_df)
         #merged_df = pd.concat([loss_df, frequency_df], axis=1, ignore_index=True)
         
         if(stratified):
-            print(s_losses)
+            # print(s_losses)
             for key, value in s_losses.items():
                 while(len(s_losses[key]) < bootstraps):
                     s_losses[key].append(None)
@@ -252,8 +252,8 @@ def get_estimators(
             s_mcse_df = pd.DataFrame.from_dict(val_dict)
             #s_mcse_df = s_mcse_df.reset_index()
             #s_mcse_df['label']  = s_mcse_df['index']
-            print(s_mcse_df)
-            print(merged_df)
+            #print(s_mcse_df)
+            #print(merged_df)
             merged_df = merged_df.merge(s_mcse_df, on=['label', 'bootstrap'])
 
         merged_df['sample_size'] = sample_size
