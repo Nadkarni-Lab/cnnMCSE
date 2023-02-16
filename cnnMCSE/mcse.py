@@ -304,7 +304,7 @@ def get_estimands(
         list: List of estimation. 
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    #print(f"Using device {device}")
 
     if(zoo_model):
         pretrained_model = transfer_helper(zoo_model)
@@ -312,29 +312,26 @@ def get_estimands(
     else:
         pretrained_model = None
 
-    print("Getting estimands")
+    # print("Getting estimands")
     models = list()
     model_paths = list()
     metrics = list()
 
-    if(current_bootstrap):
-        bootstraps = 1
-
     for i in range(bootstraps):
-        print("Running estimands ", i)
+        #print("Running estimands ", i)
         # Create a generator for replicability. 
-        print("Create a generator for replicability.")
+        #print("Create a generator for replicability.")
         if(current_bootstrap):
             generator = torch.Generator().manual_seed(start_seed+current_bootstrap)
         else:
             generator = torch.Generator().manual_seed(start_seed+i)
 
         # generate a unique training subset.
-        print("generate a unique training subset..")
+        #print("generate a unique training subset..")
         train_subset, _ = random_split(training_data, lengths = [sample_size, len(training_data) - sample_size], generator=generator)
         
         # Create a training dataloader. 
-        print("Create a training dataloader")
+        #print("Create a training dataloader")
         trainloader = torch.utils.data.DataLoader(train_subset,
                                               batch_size=batch_size,
                                               shuffle=shuffle,
@@ -353,7 +350,7 @@ def get_estimands(
 
 
         # Initialize current model. 
-        print("Initialize current model. ")
+        #print("Initialize current model. ")
         if(zoo_model): 
             current_model = model(input_size=9216)
         else:
@@ -367,25 +364,25 @@ def get_estimands(
         current_model.load_state_dict(torch.load(initial_weights))
 
         # Parallelize current model. 
-        print("Parallelize current model.")
+        #print("Parallelize current model.")
         current_model = nn.DataParallel(current_model)
         current_model.to(device)
 
         # Set model in training mode. 
-        print("Set model in training mode")
+        #print("Set model in training mode")
         current_model.train()
 
         # Assign CrossEntropyLoss and stochastic gradient descent optimizer. 
-        print("Run cross entropy loss")
+        #print("Run cross entropy loss")
         criterion = nn.CrossEntropyLoss()
         optimizer_model = optim.SGD(current_model.parameters(), lr=0.001, momentum=0.9)
 
         # Train the model.  
-        print("Running loop for estimands")
+        #print("Running loop for estimands")
         for epoch in range(n_epochs):
-            print("Running epoch... ", epoch)
+            #print("Running epoch... ", epoch)
             for j, data in enumerate(trainloader):
-                print("Testing data ", j)
+                #print("Testing data ", j)
                 # Get data
                 inputs, labels = data
                 #inputs = torch.flatten(inputs, start_dim=1)
@@ -401,9 +398,9 @@ def get_estimands(
                 # Forward + backward + optimize
                 outputs = current_model(inputs)
 
-                print(outputs.shape)
-                print(labels.shape)
-                print(labels)
+                #print(outputs.shape)
+                #print(labels.shape)
+                #print(labels)
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -411,8 +408,8 @@ def get_estimands(
         
         models.append(current_model)
 
-    print("Evaluating models... ")
-    print(len(models))
+    #print("Evaluating models... ")
+    #print(len(models))
     metrics, preds_df = metric_helper(
         models = models,
         dataset=validation_data,

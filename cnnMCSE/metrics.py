@@ -43,12 +43,12 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
     model_predictions = []
     model_labels      = []
 
-    print("Generating predictions")
-    print(len(loader))
+    #print("Generating predictions")
+    #print(len(loader))
     #with torch.no_grad():
-    print("Broken here....")
+    #print("Broken here....")
     for index, data in enumerate(loader):
-        print("Running index", index)
+        #print("Running index", index)
         images, labels = data
         images, labels = images.to(device), labels.to(device)
 
@@ -70,20 +70,20 @@ def get_AUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:int
         #     model_labels.append(label.tolist())
 
 
-    print('Model Labels', len(model_labels))
-    print('Model Predictions',len(model_predictions))
+    #print('Model Labels', len(model_labels))
+    #print('Model Predictions',len(model_predictions))
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    print("Calculating AUC.")
+    #print("Calculating AUC.")
     class_list = [i for i in range(num_classes)]
     labels_binarized = label_binarize(model_labels, classes=class_list)
     predictions_binarized = label_binarize(model_predictions, classes=class_list)
 
-    print("Getting ROC curve. ")
+    #print("Getting ROC curve. ")
     fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
     roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
-    print(roc_auc['micro'])
+    #print(roc_auc['micro'])
     return float(roc_auc['micro'])
 
 
@@ -100,7 +100,7 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
 
     # Using device. 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    #print(f"Using device {device}")
 
     # Using PreTrained Model. 
     if(zoo_model):
@@ -118,12 +118,12 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     model_predictions = []
     model_labels      = []
 
-    print("Generating predictions")
-    print(len(loader))
+    #print("Generating predictions")
+    #print(len(loader))
     #with torch.no_grad():
-    print("Broken here....")
+    #print("Broken here....")
     for index, data in enumerate(loader):
-        print("Running index", index)
+        #print("Running index", index)
         images, labels = data
         images, labels = images.to(device), labels.to(device)
 
@@ -148,36 +148,36 @@ def get_sAUC(model, loader=None, dataset=None, num_workers:int=0, num_classes:in
     roc_dict = {}
     unique_labels = list(set(model_labels))
 
-    print('Unique labels', unique_labels)
-    print('Model Labels', len(model_labels))
-    print('Model Predictions',len(model_predictions))
-    print('Prediction probabilities', )
+    # print('Unique labels', unique_labels)
+    # print('Model Labels', len(model_labels))
+    # print('Model Predictions',len(model_predictions))
+    # print('Prediction probabilities', )
 
     roc_dfs = list()
     roc_dict = {}
     for unique_label in unique_labels:
 
-        print("Running unique label", unique_label)
+        # print("Running unique label", unique_label)
         current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
         current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
         current_label_predictions = [model_predictions[i] for i in current_label_indices]
-        print('Current Label Indices', current_label_indices)
-        print('Current Labels', current_labels)
-        print('Current Label Predictions', current_label_predictions)
+        # print('Current Label Indices', current_label_indices)
+        # print('Current Labels', current_labels)
+        # print('Current Label Predictions', current_label_predictions)
 
         fpr = dict()
         tpr = dict()
         roc_auc = dict()
-        print("Calculating AUC.")
+        #print("Calculating AUC.")
         #class_list = [i for i in range(num_classes)]
         #labels_binarized = label_binarize(current_label_indices, classes=class_list)
         #predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
 
-        print("Getting ROC curve. ")
+        #print("Getting ROC curve. ")
         fpr['micro'], tpr['micro'], _ = metrics.roc_curve(labels_binarized.ravel(), predictions_binarized.ravel())
         roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
         
-        print('Current AUC', roc_auc['micro'])
+        #print('Current AUC', roc_auc['micro'])
         roc_dict['label'] = [unique_label]
         roc_dict[f's_estimands'] = [float(roc_auc['micro'])]
         roc_df = pd.DataFrame(roc_dict)
@@ -201,7 +201,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
 
     # Using device. 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    #print(f"Using device {device}")
 
     # Using PreTrained Model. 
     if(zoo_model):
@@ -219,10 +219,10 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
     model_predictions = []
     model_labels      = []
 
-    print("Generating predictions")
-    print(len(loader))
+    #print("Generating predictions")
+    #print(len(loader))
     #with torch.no_grad():
-    print("Broken here....")
+    #print("Broken here....")
     unique_labels = [i for i in range(num_classes)]
     probability_dict = {}
     probability_tensor = torch.Tensor()
@@ -232,7 +232,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
     #     probability_dict[unique_label] = list()
 
     for index, data in enumerate(loader):
-        print("Running index", index)
+        #print("Running index", index)
         images, labels = data
         images, labels = images.to(device), labels.to(device)
 
@@ -240,7 +240,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
             images = pretrained_model(images)
 
         # images, labels = images.to(DEVICE), labels.to(DEVICE)
-        print('Current Model', current_model)
+        #print('Current Model', current_model)
         probs = current_model.module.predict(images)
         # probs = torch.sigmoid(output)
         probability_tensor = torch.cat((probability_tensor, probs), dim=0)
@@ -263,17 +263,17 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
     roc_dict = {}
     unique_labels = list(set(model_labels))
 
-    print('Probability tensor shape', probability_tensor.shape)
+    #print('Probability tensor shape', probability_tensor.shape)
 
-    print('Unique labels', unique_labels)
-    print('Model Labels', len(model_labels))
-    print('Model Predictions',len(model_predictions))
-    print('Prediction probabilities', )
+    #print('Unique labels', unique_labels)
+    #print('Model Labels', len(model_labels))
+    #print('Model Predictions',len(model_predictions))
+    #print('Prediction probabilities', )
     model_labels_torch = torch.Tensor(model_labels).reshape(probability_tensor.shape[0], 1)
 
-    print('Model labels shape', model_labels_torch.shape)
+    #print('Model labels shape', model_labels_torch.shape)
     preds_df = torch.cat(((model_labels_torch.to(device)), probability_tensor.to(device)), dim=1)
-    print('Preds df shape', preds_df.shape)
+    #print('Preds df shape', preds_df.shape)
 
     roc_dfs = list()
     roc_dict = {}
@@ -282,7 +282,7 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
         label_probabilities = label_probabilities.tolist()
 
         # Source of error is here
-        print("Running unique label", unique_label)
+        #print("Running unique label", unique_label)
         #current_label_indices = [i for i in range(len(model_labels)) if (model_labels[i] == unique_label)]
         #current_labels = [model_label for model_label in model_labels if (model_label == unique_label)]
         #current_label_predictions = [model_predictions[i] for i in current_label_indices]
@@ -293,16 +293,16 @@ def get_sAUC2(model, loader=None, dataset=None, num_workers:int=0, num_classes:i
         fpr = dict()
         tpr = dict()
         roc_auc = dict()
-        print("Calculating AUC.")
+       # print("Calculating AUC.")
         #class_list = [i for i in range(num_classes)]
         #labels_binarized = label_binarize(current_label_indices, classes=class_list)
         #predictions_binarized = label_binarize(current_label_predictions, classes=class_list)
 
-        print("Getting ROC curve. ")
+        #print("Getting ROC curve. ")
         fpr['micro'], tpr['micro'], _ = metrics.roc_curve(model_labels, label_probabilities, pos_label=unique_label)
         roc_auc['micro'] = metrics.auc(fpr['micro'], tpr['micro'])
         
-        print('Current AUC', roc_auc['micro'])
+        #print('Current AUC', roc_auc['micro'])
         roc_dict['label'] = [unique_label]
         roc_dict[f's_estimands'] = [float(roc_auc['micro'])]
         roc_df = pd.DataFrame(roc_dict)
@@ -334,7 +334,7 @@ def get_aucs(models:list, dataset, num_workers:int=0, zoo_model:str=None):
                                             num_workers=num_workers)
     aucs = list()
     for index, model in enumerate(models):
-        print(f"Running model... {index} ")
+        #print(f"Running model... {index} ")
         auc = get_AUC(model=model, loader=loader, zoo_model=zoo_model)
         aucs.append(auc)
     
@@ -358,7 +358,7 @@ def get_sAUCs(models:list, dataset, out_prediction_path:str, num_workers:int=0, 
     sauc_dfs = list()
     preds_dfs = list()
     for index, model in enumerate(models):
-        print(f"Running model... {index} ")
+        #print(f"Running model... {index} ")
         #sauc_df = get_sAUC(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df, preds_df = get_sAUC2(model=model, loader=loader, zoo_model=zoo_model)
         sauc_df['estimands'] = get_AUC(model=model, loader=loader, zoo_model=zoo_model)

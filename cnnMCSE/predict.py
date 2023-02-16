@@ -898,7 +898,7 @@ def mitigate_disparity_custom(
     models:str,
     input_dim:int=None,
     hidden_size:int=None,
-    current_bootstrap:int=42,
+    start_seed:int=42,
     zoo_models:str=None,
     max_sample_size:int=5000,
     sampler_mode=None,
@@ -912,6 +912,7 @@ def mitigate_disparity_custom(
     batch_size:int=1,
     shuffle:bool=False,
     num_workers:int=4,
+    split_ratio:float=0.8,
     current_dataset:str="custom",
     metric_type:str="sAUC"
     ):
@@ -919,14 +920,19 @@ def mitigate_disparity_custom(
     # Seeding experiments. 
     start_seed = int(start_seed)
 
+    # Initialize file paths
+    out_prediction_path = os.path.join(root_dir, 'predictions.tsv')
+    out_data_path = os.path.join(root_dir, 'mitigated.tsv')
+
     # Initialize datasets. 
     dataset_dict = custom_helper(
-        dataset=dataset_path, 
+        dataset_path=dataset_path, 
         root_dir=root_dir,
         start_seed=start_seed,
         outcome_cols=outcome_cols,
-        demographics_cols=demographics_cols,
-        exclude_cols=exclude_cols
+        demographics_col=demographics_cols,
+        exclude_cols=exclude_cols,
+        split_ratio=split_ratio
     )
     
     # Initialize tested sample sizes. 
@@ -949,7 +955,6 @@ def mitigate_disparity_custom(
         model=estimand, input_dim=input_dim, hidden_size=hidden_size, 
         initial_weights_dir=root_dir)
 
-    zoo_model = [None]
     # Get unique training datasets. 
     train_test_match = dataset_dict['train_test_match']
 
@@ -974,27 +979,31 @@ def mitigate_disparity_custom(
                 metric_type=metric_type,
                 initial_weights=initial_estimand_weights_path,
                 num_workers=num_workers,
-                zoo_model=zoo_model,
-                current_bootstrap=start_seed,
+                zoo_model=None,
+                current_bootstrap=None,
                 sampler_mode=sampler_mode,
                 hidden_size=hidden_size, 
                 out_prediction_path=out_prediction_path
             )
 
             #--- Logging block. 
-            print("Logging results... ")
-            df_dict = {}
+            # print("Logging results... ")
+            # df_dict = {}
 
-            if(metric_type == "AUC"):
-                df_dict['estimands']    = estimands
-            df_dict['bootstrap']    = [i for i in range(n_bootstraps)]
-            df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
-            df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]
-            df_dict['estimator']    = [f'{estimator}' for i in range(n_bootstraps)] 
-            df_dict['estimand']     = [f'{estimand}' for i in range(n_bootstraps)] 
-            df_dict['trainset']     = [f'{trainset}' for i in range(n_bootstraps)]
-            df_dict['testset']      = [f'{testset}' for i in range(n_bootstraps)]
-            df_dict['dataset']      = [f'{trainset}_{testset}_{current_dataset}' for i in range(n_bootstraps)]
+            # if(metric_type == "AUC"):
+            # df_dict['estimands']    = estimands
+            estimands['sample_size']    = sample_size
+            estimands['trainset']       = f'{trainset}'
+            estimands['testset']        = f'{testset}'
+            # estimands['bootstrap'] 
+            # df_dict['bootstrap']    = [i for i in range(n_bootstraps)]
+            # df_dict['sample_size']  = [sample_size for i in range(n_bootstraps)]   
+            # #df_dict['backend']      = [f'{str(zoo_model)}' for i in range(n_bootstraps)]
+            # df_dict['estimator']    = [f'{estimator}' for i in range(n_bootstraps)] 
+            # df_dict['estimand']     = [f'{estimand}' for i in range(n_bootstraps)] 
+            # df_dict['trainset']     = [f'{trainset}' for i in range(n_bootstraps)]
+            # df_dict['testset']      = [f'{testset}' for i in range(n_bootstraps)]
+            # df_dict['dataset']      = [f'{trainset}_{testset}_{current_dataset}' for i in range(n_bootstraps)]
 
             preds_df['sample_size'] = sample_size
             preds_df['estimator'] = f'{estimator}'
@@ -1004,19 +1013,16 @@ def mitigate_disparity_custom(
             preds_df['dataset'] = f'{trainset}_{testset}_{current_dataset}'
 
             # Collect data frames. 
-            df = pd.DataFrame(df_dict)
-            dfs.append(df)
+            dfs.append(estimands)
             preds_dfs.append(preds_df)
 
             gc.collect()
     
     
-    # Initialize file paths
-    out_prediction_path = os.path.join(root_dir, 'predictions.tsv')
-    out_data_path = os.path.join(root_dir, 'data.tsv')
-
-    # Save files. 
+    # Postprocess dataframe
     df = pd.concat(dfs)
+    df[['demographics_train',   'outcome_train', 'subset_train']] = df['trainset'].str.split("__", expand=True)
+    df[['demographics_test',    'outcome_test',  'subset_test']]  = df['testset'].str.split("__", expand=True)
     df.to_csv(out_data_path, sep="\t", index=False)
 
     preds_df = pd.concat(preds_dfs)
