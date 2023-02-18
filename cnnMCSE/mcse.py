@@ -284,7 +284,8 @@ def get_estimands(
     current_bootstrap:int=None,
     sampler_mode:str=None,
     input_size:int=None,
-    hidden_size:int=None
+    hidden_size:int=None,
+    output_size:int=None
     ):
     """Method to generate estimands. 
 
@@ -357,8 +358,10 @@ def get_estimands(
             if(input_size):
                 if(hidden_size == None):
                     current_model = model(input_size=input_size)
-                else:
+                elif(hidden_size != None and output_size == None):
                     current_model = model(input_size=input_size, hidden_size_one=hidden_size, hidden_size_two=hidden_size, hidden_size_three=hidden_size)
+                elif(hidden_size != None and output_size != None):
+                    current_model = model(input_size=input_size, hidden_size_one=hidden_size, hidden_size_two=hidden_size, hidden_size_three=hidden_size, output_size=output_size)
             else:
                 current_model = model()
         current_model.load_state_dict(torch.load(initial_weights))

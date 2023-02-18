@@ -12,6 +12,8 @@ from cnnMCSE.mimic.nih import nih_helper
 from cnnMCSE.mimic.chexpert import chexpert_helper
 from cnnMCSE.experiments.synthetic import synthetic_helper
 from cnnMCSE.dissecting.cost import dissecting_helper
+import seaborn as sns
+import matplotlib.pyplot as plt 
 
 def get_derivative(loss_list:list, sample_sizes:list):
     """Get the derivative of the loss function. 
@@ -172,13 +174,30 @@ def estimate_mcse(df:pd.DataFrame):
     #print(out_metadata_df)
     #out_metadata_df.to_csv(out_metadata_path, sep="\t")
 
+def get_mcse_discrete(fcn_data, current_label, current_dataset, current_bootstrap):
+    #print(fcn_data.dtypes)
+    #print('Current_label', type(current_label))
+    #print('dataset', type(current_dataset))
+    #print('bootstrap', type(current_bootstrap))
 
+
+    test = fcn_data[(fcn_data["label"] == current_label) & 
+                    (fcn_data["dataset"] == current_dataset) &
+                    (fcn_data["bootstrap"] == current_bootstrap)]
+    test["log_sample_size"] = np.log2(test["sample_size"])
+    test = test.groupby("log_sample_size").agg({'s_estimators': ['mean']})
+    test = test.reset_index()
+
+
+    mcse_index = np.argmax(np.diff(test["s_estimators"]["mean"], n=2)) + 2
+    mcse_log_sample_size = test["log_sample_size"][mcse_index]
+    return mcse_log_sample_size
 
 
 def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_sample_size: int = 64, absolute_scale = None):
     sample_size_list = list()
 
-    print('Absolute scale', absolute_scale)
+    # print('Absolute scale', absolute_scale)
     if(absolute_scale == False):
         current_sample_size = min_sample_size
         while current_sample_size < max_sample_size:
@@ -196,8 +215,80 @@ def generate_sample_sizes(max_sample_size : int = 5000, log_scale: int = 2, min_
             sample_size_list.append(sample_size)
         sample_size_list.append(max_sample_size)
     sample_size_list.sort()
-    print(sample_size_list)
+    # print(sample_size_list)
     return sample_size_list
+
+def post_process_estimands(df:pd.DataFrame, 
+    demographic:str, 
+    n_bootstraps:int, 
+    outcome_pre:str, 
+    outcome_post:str, 
+    demographic_pre:str, 
+    demographic_post:str):
+    """Method to post-process the estimands to measure bias. 
+
+    Args:
+        df (pd.DataFrame): The dataframe output by the mitigate_bias_customs function. 
+        demographic (str): Demographic to evaluate on.
+        n_bootstraps (int): Number of bootstraps. 
+        outcome_pre (str): Outcome selected for pre-mitigation. 
+        outcome_post (str): Outcome selected for post-mitigation. 
+        demographic_pre (str): Demographic trained on pre-mitigation. 
+        demographic_post (str): Demographic trained on post mitigation. 
+
+    Returns:
+        pd.DataFrame: Effect of intervention on metric. 
+    """
+    df2 = df[
+        (df['demographics_test'] == demographic) &
+        (df['sample_size'] == df['sample_size'].max())
+    ]
+
+
+    df2 = df2.groupby(["sample_size", "demographics_train", "outcome_train"]).agg({
+            "estimands": ["mean", "std"]
+    })
+    df2["auc_mean"] = df2["estimands"]["mean"]
+    df2["auc_se"]   = df2["estimands"]["std"] / n_bootstraps
+
+    df2.reset_index(inplace=True)
+    df2.drop(["estimands", "sample_size"], axis=1, inplace=True)
+    df2 = df2[
+        ((df2['demographics_train'] == "Black")  & (df2['outcome_train'] == "log_cost_t")) |
+        ((df2['demographics_train'] == "joint")  & (df2['outcome_train'] == "gagne_sum_t"))
+    ]
+
+
+
+    pre =  df2[
+        ((df2['demographics_train'] == demographic_pre)  & (df2['outcome_train'] == outcome_pre))]
+    pre['intervention'] = 'Pre'
+    post =  df2[
+        ((df2['demographics_train'] == demographic_post)  & (df2['outcome_train'] == outcome_post))]
+    post['intervention'] = 'Post'
+
+    df3 = pd.concat([pre, post], axis=0)
+    df3 = df3[['auc_mean', 'auc_se', 'intervention']]
+    return df3
+
+
+def visualize_changes(data):
+    ax = sns.pointplot('demographics', 'mean_mcse', hue='label',
+    data=data, dodge=True, join=False, ci=None, scale=0.75)
+
+    # Find the x,y coordinates for each point
+    x_coords = []
+    y_coords = []
+    for point_pair in ax.collections:
+        for x, y in point_pair.get_offsets():
+            x_coords.append(x)
+            y_coords.append(y)
+    errors = data['sd_mcse']
+    colors = ['steelblue']*3 + ['coral']*3 
+    ax.errorbar(x_coords, y_coords, yerr=errors,
+        ecolor=colors, fmt=' ', zorder=-1)
+    ax.set_ylabel("AEq")
+    plt.show()
 
 def experiment_helper(experiment:str, dataset:str, root_dir:str, start_seed:int, tl_transforms:bool=False, input_dim:int=None):
     print("Experiment", experiment)
@@ -229,7 +320,7 @@ def experiment_helper(experiment:str, dataset:str, root_dir:str, start_seed:int,
 
     elif(experiment == "dissecting"):
         return dissecting_helper(dataset=dataset, root_dir=root_dir, start_seed=start_seed)
-
+    
     else:
         return None
     

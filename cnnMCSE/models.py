@@ -272,7 +272,7 @@ def init_xavier(module):
         nn.init.xavier_uniform_(module.weight)
 
 
-def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size=None)->nn.Module:
+def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size=None, output_size=None)->nn.Module:
     """Method to return torch model. 
 
     Args:
@@ -316,7 +316,7 @@ def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size
         torch.save(a3.state_dict(), initial_weights_path)
         return A3, initial_weights_path
     
-    elif(model == "FCN" and input_dim  !=None and hidden_size != None):
+    elif(model == "FCN" and input_dim  !=None and hidden_size != None and output_size == None):
         fcn = FCN(input_size=input_dim, hidden_size_one=hidden_size, 
         hidden_size_two = hidden_size, 
         hidden_size_three= hidden_size)
@@ -324,6 +324,28 @@ def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size
         initial_weights_path = os.path.join(initial_weights_dir, model  + str(input_dim) + str(hidden_size) +  '.pt')
         torch.save(fcn.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
+    
+
+    elif(model == "A3" and input_dim != None and hidden_size != None and output_size != None):
+        a3 = A3(input_size=input_dim, 
+        hidden_size_one=hidden_size, 
+        hidden_size_two = hidden_size, 
+        hidden_size_three= hidden_size)
+        a3.apply(init_xavier)
+        initial_weights_path = os.path.join(initial_weights_dir, model + str(input_dim) + str(hidden_size) + '.pt')
+        torch.save(a3.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
+    
+    elif(model == "FCN" and input_dim  !=None and hidden_size != None and output_size != None):
+        fcn = FCN(input_size=input_dim, hidden_size_one=hidden_size, 
+        hidden_size_two = hidden_size, 
+        hidden_size_three= hidden_size,
+        output_size=output_size)
+        fcn.apply(init_xavier)
+        initial_weights_path = os.path.join(initial_weights_dir, model  + str(input_dim) + str(hidden_size) +  '.pt')
+        torch.save(fcn.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
+    
     
     elif(model == "cnnAE"):
         initial_model = cnnAE()

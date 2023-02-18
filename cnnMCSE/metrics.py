@@ -8,6 +8,10 @@ import pandas as pd
 
 from sklearn import metrics
 from sklearn.preprocessing import label_binarize
+from aequitas.group import Group
+from aequitas.bias import Bias
+from aequitas.fairness import Fairness
+from aequitas.plotting import Plot
 
 
 from cnnMCSE.utils.zoo import transfer_helper
@@ -451,6 +455,50 @@ def get_sloss(labels:list, s_loss):
             s_loss_dict[key] = [np.mean(value)]
     
     return s_loss_dict
+
+def evaluate_fairness(preds_df, num_classes, demographic, outcome_pre, outcome_post, demographic_pre, demographic_post):
+    class_labels = [i for i in range(num_classes-1)]
+    bootstraps = list(preds_df['bootstrap'].unique())
+    sample_sizes = [(preds_df['sample_size'].max())]
+    df_list = list()
+    i = 0
+    for current_class_label in class_labels:
+        for bootstrap in bootstraps:
+            for sample_size in sample_sizes:
+                i = i + 1
+                df_subset = preds_df[
+                    (preds_df['bootstrap'] == bootstrap) & (preds_df['sample_size'] == sample_size) 
+                ]
+                df_subset['label_value'] = df_subset['0'] == current_class_label
+                pred_subset = df_subset[[f'{i}' for i in range(1, num_classes+1)]]
+                scores = (pred_subset.idxmax(axis=1)).apply(float)- 1
+                bin_scores = (scores == current_class_label)
+                df_subset['score'] = bin_scores
+                pre_subset_calc = df_subset[
+                    ((df_subset['demographics_train'] == demographic_pre)  & (df_subset['outcome_train'] == outcome_pre) & 
+                    (df_subset['demographics_test'] == demographic) & (df_subset['outcome_test'] == outcome_pre)) 
+
+                ]
+                pre_subset_calc['intervention'] = "Pre"
+                post_subset_calc = df_subset[
+                    ((df_subset['demographics_train'] == demographic_post)  & (df_subset['outcome_train'] == outcome_post) & 
+                    (df_subset['demographics_test'] == demographic) & (df_subset['outcome_test'] == outcome_post)) 
+                ]
+                post_subset_calc['intervention'] = "Post"
+
+                df_subset_calc = pd.concat([pre_subset_calc, post_subset_calc], axis=0)
+                df_subset_calc = df_subset_calc[['label_value', 'score', 'intervention']]
+                g = Group()
+                xtab, _ = g.get_crosstabs(df_subset_calc, attr_cols=['intervention'])
+                xtab['class_label'] = current_class_label
+                xtab['sample_size'] = sample_size
+                df_list.append(xtab)
+    df_all = pd.concat(df_list, axis=0)
+    df_all['Intervention'] = df_all['attribute_value'] 
+    df_all = df_all[['Intervention', 'precision',  'fnr']]
+    return df_all
+
+
 
 
 

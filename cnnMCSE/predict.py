@@ -905,6 +905,7 @@ def mitigate_disparity_custom(
     frequency:bool=True,
     stratified:bool=True,
     n_bootstraps:int=50,
+    n_classes:int=2, 
     config:str=None,
     log_scale=2, 
     min_sample_size=16, 
@@ -948,11 +949,11 @@ def mitigate_disparity_custom(
     estimator, estimand = models
     estimator, initial_estimator_weights_path = model_helper(
         model=estimator, 
-        input_dim=input_dim, hidden_size=hidden_size, 
+        input_dim=input_dim, hidden_size=hidden_size, output_size=n_classes,
         initial_weights_dir=root_dir
     )
     estimand, initial_estimand_weights_path = model_helper(
-        model=estimand, input_dim=input_dim, hidden_size=hidden_size, 
+        model=estimand, input_dim=input_dim, hidden_size=hidden_size, output_size=n_classes,
         initial_weights_dir=root_dir)
 
     # Get unique training datasets. 
@@ -983,6 +984,7 @@ def mitigate_disparity_custom(
                 current_bootstrap=None,
                 sampler_mode=sampler_mode,
                 hidden_size=hidden_size, 
+                output_size=n_classes,
                 out_prediction_path=out_prediction_path
             )
 
@@ -1024,8 +1026,11 @@ def mitigate_disparity_custom(
     df[['demographics_train',   'outcome_train', 'subset_train']] = df['trainset'].str.split("__", expand=True)
     df[['demographics_test',    'outcome_test',  'subset_test']]  = df['testset'].str.split("__", expand=True)
     df.to_csv(out_data_path, sep="\t", index=False)
-
+    
+    
     preds_df = pd.concat(preds_dfs)
+    preds_df[['demographics_train',   'outcome_train', 'subset_train']] = preds_df['trainset'].str.split("__", expand=True)
+    preds_df[['demographics_test',    'outcome_test',  'subset_test']]  = preds_df['testset'].str.split("__", expand=True)
     preds_df.to_csv(out_prediction_path, sep="\t", index=False)
 
     return df, preds_df
