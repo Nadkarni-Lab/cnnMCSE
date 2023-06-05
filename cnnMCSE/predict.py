@@ -413,7 +413,7 @@ def batch_loop(
             for zoo_model in zoo_model_list:
                 print(f"Using transfer learning model... {zoo_model}")
                 for sample_size in sample_sizes:
-
+                    print("Running sample size... ", sample_size)
                     #---- estimation block
                     estimators = get_estimators(
                         model = estimator,

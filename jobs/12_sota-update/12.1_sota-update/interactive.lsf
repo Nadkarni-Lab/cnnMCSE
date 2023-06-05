@@ -1,0 +1,4 @@
+bsub -J ecg_dl -P acc_EHR_ML -q interactive -q gpu -n 8 -R a100 -gpu num=1 -R rusage[mem=64000] -W 6:00 -Is /bin/bash
+
+
+python sota-update.py --datasets ethnicity --metric_type sAUC --experiment MIMIC --models tlRADA3,tlRADFCN --zoo_models radimagenet --root_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/data  --n_bootstraps 1 --shuffle --batch_size 1 --n_workers 1 --max_sample_size 5000 --frequency --stratified  --start_seed "$LSB_JOBINDEX" --initial_weights_dir /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/Figures/figure_3/a/weights --out_data_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/data/tl_data_v2_"$LSB_JOBINDEX".tsv --out_metadata_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/data/tl_metadata_v2_"$LSB_JOBINDEX".tsv --out_prediction_path /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/data/tl_predictions_"$LSB_JOBINDEX".tsv 

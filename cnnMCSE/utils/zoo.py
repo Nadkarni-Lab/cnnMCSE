@@ -4,6 +4,20 @@ import torch
 import torch.nn as nn
 from torchvision import models
 
+
+class Backbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        base_model = models.resnet50(pretrained=False, num_classes=1)
+        base_model.load_state_dict(torch.load("/sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/weights/RadImageNet-ResNet50_notop_torch.pth"))
+        encoder_layers = list(base_model.children())
+        self.backbone = nn.Sequential(*encoder_layers[:9])
+        for p in self.backbone.parameters():
+            p.requires_grad = False
+                        
+    def forward(self, x):
+        return self.backbone(x)
+
 class TransferFeatures(nn.Module):
     def __init__(self, original_model):
         super(TransferFeatures, self).__init__()
@@ -69,6 +83,9 @@ def transfer_helper(transfer_base_model:str):
     elif(transfer_base_model == "regnet_x_32gf"):
         model = models.regnet_x_32gf(pretrained=True)
     
+    elif(transfer_base_model == "radimagenet"):
+        model = Backbone()
+       
     else:
         model = None
     

@@ -4,3 +4,6 @@ scipy
 torchvision
 pandas
 pyyaml
+seaborn
+torchmetrics
+tensorboard

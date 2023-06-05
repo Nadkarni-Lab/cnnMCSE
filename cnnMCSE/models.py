@@ -271,7 +271,49 @@ def init_xavier(module):
     if type(module) == nn.Linear:
         nn.init.xavier_uniform_(module.weight)
 
+class Classifier(nn.Module):
+    def __init__(self, num_class):
+        super().__init__()
+        self.drop_out = nn.Dropout()
+        #self.linear = nn.Linear(2048, num_class)
+        self.encoder = nn.Sequential(
+        nn.Linear(2048, 1024),
+        nn.ReLU(True), 
+        nn.Linear(1024, 512), 
+        nn.ReLU(True), 
+        nn.Linear(512, 256), 
+        nn.ReLU(True), 
+        nn.Linear(256, num_class))
 
+    def forward(self, x):
+        x = x.view(x.size(0), -1)
+        x = self.drop_out(x)
+        x = self.encoder(x)
+        x = F.log_softmax(x, dim=1)
+        #x = torch.softmax(x, dim=-1)
+        return x
+
+    def predict(self, x):
+        x = x.view(x.size(0), -1)
+        x = self.drop_out(x)
+        x = self.encoder(x)
+        x = F.softmax(x, dim=1)
+        return x
+    
+
+class RadEncoder(nn.Module):
+    def __init__(self, num_class):
+        super().__init__()
+        self.drop_out = nn.Dropout()
+        self.linear = nn.Linear(2048, num_class)
+
+    def forward(self, x):
+        x = x.view(x.size(0), -1)
+        x = self.drop_out(x)
+        x = self.linear(x)
+        #x = torch.softmax(x, dim=-1)
+        return x
+    
 def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size=None, output_size=None)->nn.Module:
     """Method to return torch model. 
 
@@ -359,14 +401,14 @@ def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size
         torch.save(initial_model.state_dict(), initial_weights_path)
         return cnnFCN, initial_weights_path
     
-    elif(model == "tlFCN" and input_size):
-        initial_model = FCN(input_size=input_size)
+    elif(model == "tlFCN" and input_dim):
+        initial_model = FCN(input_size=input_dim)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
         return FCN, initial_weights_path
     
-    elif(model == "tlAE"):
-        initial_model = A3(input_size=input_size)
+    elif(model == "tlAE" and input_dim):
+        initial_model = A3(input_size=input_dim)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
         return A3, initial_weights_path
@@ -379,6 +421,20 @@ def model_helper(model:str, initial_weights_dir:str, input_dim=None, hidden_size
     
     elif(model == "tlAE2"):
         initial_model = A3(input_size=9216)
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return A3, initial_weights_path
+
+    elif(model == "tlRADFCN"):
+        initial_model = Classifier(num_class=10)
+        initial_model.apply(init_xavier)
+        initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
+        torch.save(initial_model.state_dict(), initial_weights_path)
+        return FCN, initial_weights_path
+    
+    elif(model == "tlRADA3"):
+        initial_model = A3(input_size=2048)
+        initial_model.apply(init_xavier)
         initial_weights_path = os.path.join(initial_weights_dir, model + '.pt')
         torch.save(initial_model.state_dict(), initial_weights_path)
         return A3, initial_weights_path

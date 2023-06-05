@@ -25,7 +25,56 @@ mimic_pt_path = os.path.join(DEM_DIR, 'patients.csv.gz')
 mimic_transfer_path = os.path.join(DEM_DIR, 'transfers.csv.gz')
 mimic_admissions_path = os.path.join(DEM_DIR, 'admissions.csv.gz')
 
-def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
+def label_encoding(labels_df:pd.DataFrame, labels:list, set_none:bool=False)->pd.DataFrame:
+    """_Method to label encode. 
+
+    Args:
+        labels_df (pd.DataFrame): Pandas dataframe with labels. 
+        labels (list): List of labels to encode. 
+
+    Returns:
+        pd.DataFrame: Pandas dataframe with encoded labels. 
+    """
+
+    # initialize list of targets and relevant mappings. 
+    targets = list()
+    targets_mapping = list()
+
+    # iterate across the list. 
+    if(set_none == False):
+        for index, row in labels_df.iterrows():
+            current_target = 0
+            current_label = 'None'
+            for val, label in enumerate(labels):
+                if(row[label] == 1):
+                    current_target = val+1
+                    current_label = label
+            targets_mapping.append(current_label)
+            targets.append(current_target)
+    else:
+        for index, row in labels_df.iterrows():
+            current_target = -1
+            current_label = 'NA'
+            for val, label in enumerate(labels):
+                if(row[label] == 1):
+                    current_target = val
+                    current_label = label
+            targets_mapping.append(current_label)
+            targets.append(current_target)
+    #print(targets)
+    
+    # append to list. 
+    labels_df['target'] = targets
+    labels_df['target_map'] = targets_mapping
+    labels_df = labels_df[
+        labels_df['target'] != -1
+    ]
+    
+    #print(labels_df['target_map'].value_counts())
+
+    return labels_df
+
+def label_encoding_v2(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
     """_Method to label encode. 
 
     Args:
@@ -46,7 +95,7 @@ def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
         current_label = 'None'
         for val, label in enumerate(labels):
             if(row[label] == 1):
-                current_target = val+1
+                current_target = val
                 current_label = label
         targets_mapping.append(current_label)
         targets.append(current_target)
@@ -57,7 +106,7 @@ def label_encoding(labels_df:pd.DataFrame, labels:list)->pd.DataFrame:
     return labels_df
 
 
-def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurances:str=None, genders:str=None, age_range:str=None):
+def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientations:str, insurances:str=None, genders:str=None, age_range:str=None, set_none:bool=False, override:bool=False):
     
     # read in the records
     cxr_record_df = pd.read_csv(record_list)
@@ -81,6 +130,9 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     
     if(age_range):
         out_config = out_config + age_range
+    
+    if(set_none):
+        out_config = out_config + ['SET_NONE']
 
     out_metadata_filename = '_'.join(out_config)
     out_metadata_filename = out_metadata_filename + '.tsv'
@@ -139,11 +191,14 @@ def generate_metadata_file(root_dir:str, labels:str, demographics:str, orientati
     # select relevant labels. 
     labels_df = pd.read_csv(chexpert)
     labels_df = labels_df[['subject_id', 'study_id'] + labels]
-    encoded_df = label_encoding(labels_df, labels)
+    encoded_df = label_encoding(labels_df, labels, set_none=set_none)
     cxr_record_df = pd.merge(cxr_record_df, encoded_df, on = ['subject_id', 'study_id'])
 
+    # Print Label summary
+    print(cxr_record_df['target'].value_counts())
+    
     # export dataframe. 
-    if(exists(out_metadata_path) == False): 
+    if(exists(out_metadata_path) == False or override == True): 
         cxr_record_df.to_csv(out_metadata_path, sep="\t", index=False)
     return out_metadata_path
     
@@ -215,9 +270,12 @@ def generate_dataloaders(
         'train_test_match': [
             ['subsample_1', 'testsample_1'], 
             ['subsample_2', 'testsample_2'], 
+            ['subsample_1', 'testsample_2'],
+            ['subsample_2', 'testsample_1'], 
             ['joint_trainset', 'joint_testset'], 
             ['joint_trainset', 'testsample_1'],
-            ['joint_trainset', 'testsample_2']
+            ['joint_trainset', 'testsample_2'],
+
         ]
     }
     return dataset_dict
@@ -369,7 +427,92 @@ def mimic_helper(dataset, root_dir, tl_transforms:bool=False):
             orientations='postero-anterior',
             insurances='Other'
         )
+
         return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    if(dataset == "SOTA-ethnicity-pneumothorax"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='No Finding,Pneumothorax',
+            demographics="WHITE,BLACK/AFRICAN AMERICAN,BLACK/AFRICAN AMERICAN,HISPANIC/LATINO,AMERICAN INDIAN/ALASKA NATIVE,ASIAN",
+            orientations='postero-anterior',
+            set_none=True,
+            override=True
+        )
+
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='No Finding,Pneumothorax',
+            demographics="BLACK/AFRICAN AMERICAN",
+            orientations='postero-anterior',
+            set_none=True,
+            override=True
+        )
+
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+
+    if(dataset == "SOTA-ethnicity-Consolidation"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='No Finding,Consolidation',
+            demographics="WHITE,BLACK/AFRICAN AMERICAN,BLACK/AFRICAN AMERICAN,HISPANIC/LATINO,AMERICAN INDIAN/ALASKA NATIVE,ASIAN",
+            orientations='postero-anterior',
+            override=True,
+            set_none=True
+        )
+
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='No Finding,Consolidation',
+            demographics="BLACK/AFRICAN AMERICAN",
+            orientations='postero-anterior',
+            override=True,
+            set_none=True
+        )
+
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if("SOTA-ethnicity-black" in dataset):
+        label = dataset.split("__")[-1]
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels=f'No Finding,{label}',
+            demographics="WHITE,BLACK/AFRICAN AMERICAN,BLACK/AFRICAN AMERICAN,HISPANIC/LATINO,AMERICAN INDIAN/ALASKA NATIVE,ASIAN",
+            orientations='postero-anterior',
+            override=True,
+            set_none=True
+        )
+
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels=f'No Finding,{label}',
+            demographics="BLACK/AFRICAN AMERICAN",
+            orientations='postero-anterior',
+            override=True,
+            set_none=True
+        )
+
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+    
+    if(dataset == "ethnicity-asian"):
+        metadata_path_1 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='WHITE',
+            orientations='postero-anterior'
+        )
+        metadata_path_2 = generate_metadata_file(
+            root_dir=root_dir, 
+            labels='Pneumonia,Pneumothorax,Atelectasis,Cardiomegaly,Consolidation,Edema,Enlarged Cardiomediastinum,Lung Opacity,Pleural Effusion',
+            demographics='ASIAN',
+            orientations='postero-anterior'
+        )
+        return generate_dataloaders(metadata_paths=[metadata_path_1, metadata_path_2], tl_transforms=tl_transforms)
+\
+
+
+
+    
+
 
 
 class MimicCXRDataset(Dataset):

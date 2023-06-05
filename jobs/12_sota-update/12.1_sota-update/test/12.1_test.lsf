@@ -1,0 +1,28 @@
+#BSUB -J "SOTA_test"
+#BSUB -P acc_EHR_ML 
+#BSUB -q gngpu
+#BSUB -n 1
+#BSUB -W 140:00 
+#BSUB -R rusage[mem=64000]
+#BSUB -R affinity[core(8)]
+#BSUB -gpu num=1
+#BSUB -R a100 
+#BSUB -R span[hosts=1]
+#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/test/logs/%J.%I.stdout 
+#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/test/logs/%J.%I.stderr 
+#BSUB -L /bin/bash 
+
+ml purge
+ml python/3.8.2
+echo $PYTHONPATH
+export PYTHONPATH=/hpc/packages/minerva-centos7/python/3.8.2/lib/python3.8/site-packages:/sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv/lib/python3.8/site-packages
+
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/mcse-venv
+source bin/activate
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.1_sota-update/test
+echo "$LSB_JOBINDEX"
+export CURRENT_BOOTSTRAP="$LSB_JOBINDEX"
+echo "%I"
+
+
+python test.py

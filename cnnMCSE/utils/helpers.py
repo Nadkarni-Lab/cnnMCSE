@@ -253,12 +253,6 @@ def post_process_estimands(df:pd.DataFrame,
 
     df2.reset_index(inplace=True)
     df2.drop(["estimands", "sample_size"], axis=1, inplace=True)
-    df2 = df2[
-        ((df2['demographics_train'] == "Black")  & (df2['outcome_train'] == "log_cost_t")) |
-        ((df2['demographics_train'] == "joint")  & (df2['outcome_train'] == "gagne_sum_t"))
-    ]
-
-
 
     pre =  df2[
         ((df2['demographics_train'] == demographic_pre)  & (df2['outcome_train'] == outcome_pre))]

@@ -14,7 +14,7 @@ from torch.utils.data import TensorDataset, random_split
 from sklearn.datasets import make_classification
 from scipy.interpolate import UnivariateSpline
 
-from cnnMCSE.models import FCN, A3
+from cnnMCSE.models import FCN, A3, Classifier
 from cnnMCSE.metrics import metric_helper
 from cnnMCSE.utils.zoo import transfer_helper
 from cnnMCSE.dataloader import weighted_sampler
@@ -113,8 +113,10 @@ def get_estimators(
 
         # Initialize current model. 
         #print(f"Initialize current model. {initial_weights}")
-        if(zoo_model): 
+        if(zoo_model == "alexnet"): 
             current_model = model(input_size=9216)
+        elif(zoo_model == "radimagenet"): 
+            current_model = model(input_size=2048)
         else:
             if(input_size):
                 if(hidden_size == None):
@@ -305,7 +307,7 @@ def get_estimands(
         list: List of estimation. 
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    #print(f"Using device {device}")
+    print(f"Using device {device}")
 
     if(zoo_model):
         pretrained_model = transfer_helper(zoo_model)
@@ -352,8 +354,10 @@ def get_estimands(
 
         # Initialize current model. 
         #print("Initialize current model. ")
-        if(zoo_model): 
+        if(zoo_model == "alexnet"): 
             current_model = model(input_size=9216)
+        elif(zoo_model == "radimagenet"):
+            current_model = Classifier(num_class=10)
         else:
             if(input_size):
                 if(hidden_size == None):
