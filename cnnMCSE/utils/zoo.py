@@ -43,6 +43,9 @@ def transfer_helper(transfer_base_model:str):
     if(transfer_base_model == "resnet18"):
         model = models.resnet18(pretrained=True)
 
+    elif(transfer_base_model == "resnet50"):
+        model = models.resnet50(pretrained=False)
+
     elif(transfer_base_model == "alexnet"):
         model = models.alexnet(pretrained=True)
         model = TransferFeatures(original_model=model)

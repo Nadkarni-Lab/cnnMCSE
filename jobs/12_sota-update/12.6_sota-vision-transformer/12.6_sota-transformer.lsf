@@ -1,0 +1,45 @@
+#BSUB -J "SOTA_effusion_short_pneumothorax[1-10]"
+#BSUB -P acc_EHR_ML 
+#BSUB -q gpu
+#BSUB -n 1
+#BSUB -W 140:00 
+#BSUB -R rusage[mem=64000]
+#BSUB -R affinity[core(8)]
+#BSUB -gpu num=1
+#BSUB -oo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/logs/%J.%I.stdout 
+#BSUB -eo /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/logs/%J.%I.stderr 
+#BSUB -L /bin/bash 
+
+ml purge
+ml python/3.8.2
+source /sc/arion/projects/EHR_ML/gulamf01/aICP/venv/bin/activate
+export PYTHONPATH=/sc/arion/projects/EHR_ML/gulamf01/aICP/build/lib/aICP
+cd /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer
+# Downgrade to lightning==2.0.8
+
+# Atelectasis
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/atelectasis.yaml --seed "$LSB_JOBINDEX"
+
+# Cardiomegaly
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/cardiomegaly.yaml --seed "$LSB_JOBINDEX"
+
+# Consolidation
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/consolidation.yaml --seed "$LSB_JOBINDEX"
+
+# Edema
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/edema.yaml --seed "$LSB_JOBINDEX"
+
+# Effusion
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/effusion.yaml --seed "$LSB_JOBINDEX"
+
+# Enlarged CM
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/enlargedcm.yaml --seed "$LSB_JOBINDEX"
+
+# Opacity
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/opacity.yaml --seed "$LSB_JOBINDEX"
+
+# Pneumonia
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/pneumonia.yaml --seed "$LSB_JOBINDEX"
+
+# Pneumothorax
+# python /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/sota-transformer.py --config /sc/arion/projects/EHR_ML/gulamf01/cnnMCSE/jobs/12_sota-update/12.6_sota-vision-transformer/short/pneumothorax.yaml --seed "$LSB_JOBINDEX"

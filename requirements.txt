@@ -7,3 +7,4 @@ pyyaml
 seaborn
 torchmetrics
 tensorboard
+lightning==2.0.8
